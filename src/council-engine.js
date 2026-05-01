@@ -1,8 +1,8 @@
-import { getDefaultCouncil, providerConfigured } from "./council-config.js";
+import { getDefaultCouncil } from "./council-config.js";
 import { runFinanceTools } from "./finance-tools.js";
 import { askModel } from "./model-adapters.js";
 
-const memberSystem = `你是 AI 金融议会的一名独立议员。
+const memberSystem = `你是 MAGI SYSTEM 的一名独立分析模型。
 角色：{{ROLE}}
 
 产品原则：
@@ -27,26 +27,6 @@ const memberSystem = `你是 AI 金融议会的一名独立议员。
   "next_checks": ["后续核验"],
   "minority_signal": "如果你的观点可能是少数派，说明它为什么值得保留",
   "model": "模型名称"
-}`;
-
-const chairSystem = `你是 AI 金融议会主席，独立于四位议员之外。
-你不投票，不站队，不引入四席都没有提出的新观点。
-你的任务是整理共识、分歧和少数派意见，形成中文决策辅助包。
-不要把分歧强行调和。表达必须专业、简洁、可执行。
-只返回符合以下结构的 JSON：
-{
-  "decision": "agree | disagree | agree_with_conditions | abstain",
-  "probability": 0.0,
-  "direction": "决策方向",
-  "confidence": 0.0,
-  "vote_summary": "投票摘要",
-  "rationale": "该判断成立的原因",
-  "consensus_zone": ["至少 2 席共同支持的要点"],
-  "disagreements": ["关键分歧"],
-  "minority_opinion_preserved": "最值得保留的少数派意见",
-  "action": "下一步动作",
-  "watchlist": ["观察项"],
-  "decision_guide": "用户如何根据风险偏好使用这份结论"
 }`;
 
 export async function analyzeWithCouncil({ question, context = "", selectedMembers = [] }) {
@@ -109,7 +89,7 @@ export async function analyzeWithCouncil({ question, context = "", selectedMembe
   );
 
   const aggregate = aggregateVotes(memberResults);
-  const chair = await synthesizeChair({ council, question, context, toolOutputs, memberResults, aggregate });
+  const decision = synthesizeDecision(memberResults, aggregate);
 
   return {
     question,
@@ -118,7 +98,7 @@ export async function analyzeWithCouncil({ question, context = "", selectedMembe
     tools: toolOutputs,
     members: memberResults,
     aggregate,
-    chair
+    decision
   };
 }
 
@@ -132,7 +112,7 @@ ${context || "无"}
 可用金融工具输出：
 ${toolText}
 
-议会成员：
+分析模型：
 ${member.name}
 
 工具权限：
@@ -152,49 +132,6 @@ function summarizeTools(toolOutputs) {
     name: tool.name,
     status: tool.status || "ok",
     source: tool.source || "local"
-  }));
-}
-
-async function synthesizeChair({ council, question, context, toolOutputs, memberResults, aggregate }) {
-  if (!providerConfigured(council.chair.provider)) {
-    return localChair(memberResults, aggregate);
-  }
-
-  const payload = {
-    question,
-    context,
-    tools: toolOutputs,
-    member_results: anonymizeMembers(memberResults),
-    aggregate
-  };
-
-  try {
-    const raw = await askModel({
-      provider: council.chair.provider,
-      model: council.chair.model,
-      system: chairSystem,
-      user: JSON.stringify(payload, null, 2),
-      temperature: 0.1
-    });
-    return normalizeChair(parseModelJson(raw), aggregate);
-  } catch {
-    return localChair(memberResults, aggregate);
-  }
-}
-
-function anonymizeMembers(memberResults) {
-  return memberResults.map((result, index) => ({
-    seat: `Seat ${String.fromCharCode(65 + index)}`,
-    stance: result.stance,
-    probability: result.probability,
-    confidence: result.confidence,
-    direction: result.direction,
-    thesis: result.thesis,
-    key_evidence: result.key_evidence,
-    key_assumptions: result.key_assumptions,
-    risks: result.risks,
-    what_would_change_my_mind: result.what_would_change_my_mind,
-    minority_signal: result.minority_signal
   }));
 }
 
@@ -232,23 +169,6 @@ function normalizeVote(parsed, fallbackModel) {
   };
 }
 
-function normalizeChair(parsed, aggregate) {
-  return {
-    decision: normalizeStance(parsed.decision || aggregate.decision),
-    probability: clampNumber(parsed.probability, aggregate.weighted_probability),
-    direction: String(parsed.direction || aggregate.direction),
-    confidence: clampNumber(parsed.confidence, aggregate.confidence),
-    vote_summary: String(parsed.vote_summary || aggregate.summary),
-    rationale: String(parsed.rationale || "该结论来自议会加权投票。"),
-    consensus_zone: normalizeList(parsed.consensus_zone),
-    disagreements: normalizeList(parsed.disagreements),
-    minority_opinion_preserved: String(parsed.minority_opinion_preserved || ""),
-    action: String(parsed.action || "在证据更充分前，不宜扩大仓位。"),
-    watchlist: normalizeList(parsed.watchlist),
-    decision_guide: String(parsed.decision_guide || "")
-  };
-}
-
 function aggregateVotes(results) {
   const valid = results.filter((result) => result.ok);
   const pool = valid.length ? valid : results;
@@ -276,7 +196,7 @@ function aggregateVotes(results) {
   };
 }
 
-function localChair(results, aggregate) {
+function synthesizeDecision(results, aggregate) {
   const disagreement = [...new Set(results.map((result) => result.direction).filter(Boolean))].slice(0, 4);
   const consensus = extractConsensus(results);
   const minority = extractMinority(results);
@@ -286,7 +206,7 @@ function localChair(results, aggregate) {
     direction: aggregate.direction,
     confidence: aggregate.confidence,
     vote_summary: aggregate.summary,
-    rationale: "主席模型尚未配置或调用失败，因此使用本地投票规则完成综合判断。",
+    rationale: "MAGI SYSTEM 根据四个模型的并行输出完成加权综合，并保留共识、分歧和少数派信号。",
     consensus_zone: consensus,
     disagreements: disagreement,
     minority_opinion_preserved: minority,
