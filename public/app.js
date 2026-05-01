@@ -14,7 +14,6 @@ const memberCount = document.querySelector("#memberCount");
 const councilList = document.querySelector("#councilList");
 const toolList = document.querySelector("#toolList");
 const statusEl = document.querySelector("#status");
-const chairModel = document.querySelector("#chairModel");
 const toolEvidence = document.querySelector("#toolEvidence");
 const toolEvidenceCount = document.querySelector("#toolEvidenceCount");
 
@@ -75,14 +74,16 @@ function renderConfig() {
   const liveCount = members.filter((member) => member.configured).length;
   statusEl.textContent = liveCount ? `${liveCount} 个模型在线` : "演示模式";
   memberCount.textContent = String(members.length);
-  chairModel.textContent = shortModel(state.config.council.chair.model);
   toolEvidenceCount.textContent = String(state.config.tools.length);
 
   membersEl.innerHTML = members.map((member) => `
     <article class="member-card dormant">
-      <div>
-        <p class="section-kicker">${escapeHtml(member.provider)}</p>
-        <h3>${escapeHtml(member.name)}</h3>
+      <div class="member-identity">
+        ${memberAvatar(member.provider)}
+        <div>
+          <p class="section-kicker">${escapeHtml(member.provider)}</p>
+          <h3>${escapeHtml(member.name)}</h3>
+        </div>
       </div>
       <p>${escapeHtml(member.role)}</p>
       <span class="status-line">${member.configured ? "已接入" : "演示"}</span>
@@ -99,30 +100,31 @@ function renderConfig() {
 }
 
 function renderResult(result) {
-  renderDecision(result.chair, result.aggregate);
+  const memo = result.aggregate || result.chair;
+  if (memo) renderDecision(memo);
   renderMembers(result.members || []);
   renderToolEvidence(result.tools || []);
 }
 
-function renderDecision(chair, aggregate) {
-  const probability = percent(chair.probability);
-  const confidence = percent(chair.confidence);
+function renderDecision(memo) {
+  const probability = percent(memo.probability);
+  const confidence = percent(memo.confidence);
   decisionPanel.innerHTML = `
     <div class="memo-primary">
       <p class="section-kicker">Decision Memo</p>
-      <h2>${formatStance(chair.decision)}</h2>
-      <p class="lead">${escapeHtml(chair.rationale)}</p>
+      <h2>${formatStance(memo.decision)}</h2>
+      <p class="lead">${escapeHtml(memo.rationale || "")}</p>
       <div class="metric-row">
         <span><strong>${probability}</strong> 决策概率</span>
-        <span><strong>${confidence}</strong> 主席信心</span>
-        <span><strong>${escapeHtml(chair.direction || aggregate.direction)}</strong> 方向</span>
+        <span><strong>${confidence}</strong> 议会信心</span>
+        <span><strong>${escapeHtml(memo.direction || "")}</strong> 方向</span>
       </div>
     </div>
     <div class="memo-secondary">
-      ${compactBlock("下一步", [chair.action])}
-      ${compactBlock("关键分歧", chair.disagreements)}
-      ${compactBlock("少数派", [chair.minority_opinion_preserved])}
-      ${compactBlock("观察项", chair.watchlist)}
+      ${compactBlock("下一步", [memo.action])}
+      ${compactBlock("关键分歧", memo.disagreements)}
+      ${compactBlock("少数派", [memo.minority_opinion_preserved])}
+      ${compactBlock("观察项", memo.watchlist)}
     </div>
   `;
 }
@@ -132,9 +134,12 @@ function renderMembers(members) {
   membersEl.innerHTML = members.map((member) => `
     <article class="member-card">
       <div class="member-head">
-        <div>
-          <p class="section-kicker">${escapeHtml(member.provider)}</p>
-          <h3>${escapeHtml(member.name)}</h3>
+        <div class="member-identity">
+          ${memberAvatar(member.provider)}
+          <div>
+            <p class="section-kicker">${escapeHtml(member.provider)}</p>
+            <h3>${escapeHtml(member.name)}</h3>
+          </div>
         </div>
         <span class="stance ${escapeHtml(member.stance)}">${formatStance(member.stance)}</span>
       </div>
@@ -147,6 +152,44 @@ function renderMembers(members) {
       ${compactBlock("会改观点", member.what_would_change_my_mind, 2)}
     </article>
   `).join("");
+}
+
+function memberAvatar(provider) {
+  const avatars = {
+    deepseek: `
+      <svg class="member-avatar" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="16" cy="16" r="16" fill="#4D6BFE"/>
+        <path d="M9 14.5c1.6-1 3.4-1 5 0c1-1.8 2.8-2.6 4.6-2c-.4 1.8-.1 3.6 1 5c-1.6 1-3.4 1-5 0c-1 1.8-2.8 2.6-4.6 2c.4-1.8.1-3.6-1-5z" fill="#fff"/>
+        <circle cx="20.4" cy="13.4" r="0.9" fill="#4D6BFE"/>
+      </svg>
+    `,
+    google: `
+      <svg class="member-avatar" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="gemini-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#1C7DD9"/>
+            <stop offset="50%" stop-color="#9168C0"/>
+            <stop offset="100%" stop-color="#E94584"/>
+          </linearGradient>
+        </defs>
+        <rect width="32" height="32" rx="16" fill="#fff"/>
+        <path d="M16 5c0 6 5 11 11 11c-6 0-11 5-11 11c0-6-5-11-11-11c6 0 11-5 11-11z" fill="url(#gemini-grad)"/>
+      </svg>
+    `,
+    xai: `
+      <svg class="member-avatar" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect width="32" height="32" rx="16" fill="#000"/>
+        <path d="M10.5 9.5l5 6.5l-5 6.5h2.6l3.7-4.8l3.7 4.8h2.6l-5-6.5l5-6.5h-2.6l-3.7 4.8l-3.7-4.8z" fill="#fff"/>
+      </svg>
+    `,
+    minimax: `
+      <svg class="member-avatar" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="16" cy="16" r="16" fill="#F23F5D"/>
+        <path d="M8.6 22V10h2.6l4.8 7.4L20.8 10h2.6v12h-2.4v-7.6l-4.2 6.4h-1.2l-4.2-6.4V22z" fill="#fff"/>
+      </svg>
+    `
+  };
+  return avatars[provider] || "";
 }
 
 function renderToolEvidence(tools) {
