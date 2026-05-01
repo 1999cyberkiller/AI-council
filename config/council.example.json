@@ -1,0 +1,48 @@
+{
+  "members": [
+    {
+      "id": "deepseek",
+      "name": "DeepSeek 策略研究员",
+      "role": "中文金融推理、估值约束、证据交叉核验、交易纪律",
+      "provider": "deepseek",
+      "modelEnv": "DEEPSEEK_MODEL",
+      "allowedTools": ["market_data", "fundamentals", "valuation_sanity", "web_research"]
+    },
+    {
+      "id": "macro",
+      "name": "宏观经济顾问",
+      "role": "全球宏观、利率周期、流动性环境、政策拐点",
+      "provider": "openai",
+      "modelEnv": "OPENAI_MODEL",
+      "allowedTools": ["scenario_matrix", "risk_register", "market_data", "web_research"]
+    },
+    {
+      "id": "equity",
+      "name": "权益研究员",
+      "role": "商业质量、盈利能力、估值框架、市场定位",
+      "provider": "anthropic",
+      "modelEnv": "ANTHROPIC_MODEL",
+      "allowedTools": ["market_data", "fundamentals", "valuation_sanity", "web_research"]
+    },
+    {
+      "id": "risk",
+      "name": "风险官",
+      "role": "下行情景、回撤控制、杠杆暴露、拥挤交易、极端损失",
+      "provider": "google",
+      "modelEnv": "GOOGLE_MODEL",
+      "allowedTools": ["risk_register", "position_sizing", "market_data", "web_research"]
+    },
+    {
+      "id": "contrarian",
+      "name": "反共识顾问",
+      "role": "反向证据、隐含假设、激励约束、叙事漏洞",
+      "provider": "xai",
+      "modelEnv": "XAI_MODEL",
+      "allowedTools": ["scenario_matrix", "risk_register", "fundamentals", "web_research"]
+    }
+  ],
+  "chair": {
+    "provider": "openai",
+    "modelEnv": "OPENAI_MODEL"
+  }
+}
