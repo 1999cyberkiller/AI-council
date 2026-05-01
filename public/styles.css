@@ -290,7 +290,7 @@ button:disabled {
 
 .signal-strip {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   margin-bottom: 24px;
 }
@@ -356,6 +356,29 @@ button:disabled {
   justify-content: space-between;
   gap: 12px;
   align-items: flex-start;
+}
+
+.member-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.member-avatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: block;
+}
+
+.member-identity .section-kicker {
+  margin-bottom: 2px;
+}
+
+.member-identity h3 {
+  margin-bottom: 0;
 }
 
 .stance.agree {
