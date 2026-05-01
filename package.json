@@ -1,0 +1,14 @@
+{
+  "name": "ai-finance-council",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js",
+    "check": "node --check src/server.js && node --check src/council-engine.js && node --check src/model-adapters.js && node --check src/finance-tools.js && node --check src/data-tools.js && node --check public/app.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
