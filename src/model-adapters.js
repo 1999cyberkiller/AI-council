@@ -189,7 +189,7 @@ async function readJsonOrThrow(response) {
 }
 
 function demoResponse({ provider, model, system, user }) {
-  const role = system.match(/角色：(.+)/)?.[1] || "议会成员";
+  const role = system.match(/角色：(.+)/)?.[1] || "分析模型";
   const question = user.match(/问题：\n([\s\S]*?)\n\n/)?.[1]?.trim() || user.slice(0, 180);
   const stanceMap = {
     openai: "agree",
@@ -224,7 +224,7 @@ function demoResponse({ provider, model, system, user }) {
     key_evidence: [
       "当前尚未配置 API key，因此返回演示分析。",
       "在 .env 中填入模型配置后，可切换为真实模型分析。",
-      "议会并行分析、投票和综合流程已生效。"
+      "MAGI SYSTEM 的并行分析、投票和综合流程已生效。"
     ],
     key_assumptions: [
       "盈利预期没有出现连续下修。",
