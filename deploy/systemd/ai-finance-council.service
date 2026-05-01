@@ -1,0 +1,18 @@
+[Unit]
+Description=AI Finance Council
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/ai-finance-council
+EnvironmentFile=/opt/ai-finance-council/.env
+ExecStart=/usr/bin/node /opt/ai-finance-council/src/server.js
+Restart=always
+RestartSec=3
+User=www-data
+Group=www-data
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
