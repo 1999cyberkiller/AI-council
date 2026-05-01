@@ -14,7 +14,7 @@ const memberCount = document.querySelector("#memberCount");
 const councilList = document.querySelector("#councilList");
 const toolList = document.querySelector("#toolList");
 const statusEl = document.querySelector("#status");
-const chairModel = document.querySelector("#chairModel");
+const liveModelCount = document.querySelector("#liveModelCount");
 const toolEvidence = document.querySelector("#toolEvidence");
 const toolEvidenceCount = document.querySelector("#toolEvidenceCount");
 
@@ -37,8 +37,8 @@ async function runCouncil() {
   decisionPanel.innerHTML = `
     <div class="empty-state">
       <p class="section-kicker">Decision Memo</p>
-      <h2>议会正在分析</h2>
-      <p>四席并行调用中。先让模型各自说完，再交给主席整理。</p>
+      <h2>MAGI 正在分析</h2>
+      <p>四个模型并行调用中。系统会压缩共识、分歧和少数派信号。</p>
     </div>
   `;
   membersEl.innerHTML = "";
@@ -75,14 +75,17 @@ function renderConfig() {
   const liveCount = members.filter((member) => member.configured).length;
   statusEl.textContent = liveCount ? `${liveCount} 个模型在线` : "演示模式";
   memberCount.textContent = String(members.length);
-  chairModel.textContent = shortModel(state.config.council.chair.model);
+  liveModelCount.textContent = String(liveCount);
   toolEvidenceCount.textContent = String(state.config.tools.length);
 
   membersEl.innerHTML = members.map((member) => `
     <article class="member-card dormant">
-      <div>
-        <p class="section-kicker">${escapeHtml(member.provider)}</p>
-        <h3>${escapeHtml(member.name)}</h3>
+      <div class="model-title">
+        ${modelAvatar(member)}
+        <div>
+          <p class="section-kicker">${escapeHtml(member.provider)}</p>
+          <h3>${escapeHtml(member.name)}</h3>
+        </div>
       </div>
       <p>${escapeHtml(member.role)}</p>
       <span class="status-line">${member.configured ? "已接入" : "演示"}</span>
@@ -90,7 +93,7 @@ function renderConfig() {
   `).join("");
 
   councilList.innerHTML = members.map((member) => `
-    <p><strong>${escapeHtml(member.name)}</strong><span>${escapeHtml(shortModel(member.model))}</span></p>
+    <p><strong>${modelAvatar(member)}${escapeHtml(member.name)}</strong><span>${escapeHtml(shortModel(member.model))}</span></p>
   `).join("");
 
   toolList.innerHTML = state.config.tools.map((tool) => `
@@ -99,30 +102,30 @@ function renderConfig() {
 }
 
 function renderResult(result) {
-  renderDecision(result.chair, result.aggregate);
+  renderDecision(result.decision, result.aggregate);
   renderMembers(result.members || []);
   renderToolEvidence(result.tools || []);
 }
 
-function renderDecision(chair, aggregate) {
-  const probability = percent(chair.probability);
-  const confidence = percent(chair.confidence);
+function renderDecision(decision, aggregate) {
+  const probability = percent(decision.probability);
+  const confidence = percent(decision.confidence);
   decisionPanel.innerHTML = `
     <div class="memo-primary">
       <p class="section-kicker">Decision Memo</p>
-      <h2>${formatStance(chair.decision)}</h2>
-      <p class="lead">${escapeHtml(chair.rationale)}</p>
+      <h2>${formatStance(decision.decision)}</h2>
+      <p class="lead">${escapeHtml(decision.rationale)}</p>
       <div class="metric-row">
         <span><strong>${probability}</strong> 决策概率</span>
-        <span><strong>${confidence}</strong> 主席信心</span>
-        <span><strong>${escapeHtml(chair.direction || aggregate.direction)}</strong> 方向</span>
+        <span><strong>${confidence}</strong> 综合信心</span>
+        <span><strong>${escapeHtml(decision.direction || aggregate.direction)}</strong> 方向</span>
       </div>
     </div>
     <div class="memo-secondary">
-      ${compactBlock("下一步", [chair.action])}
-      ${compactBlock("关键分歧", chair.disagreements)}
-      ${compactBlock("少数派", [chair.minority_opinion_preserved])}
-      ${compactBlock("观察项", chair.watchlist)}
+      ${compactBlock("下一步", [decision.action])}
+      ${compactBlock("关键分歧", decision.disagreements)}
+      ${compactBlock("少数派", [decision.minority_opinion_preserved])}
+      ${compactBlock("观察项", decision.watchlist)}
     </div>
   `;
 }
@@ -132,9 +135,12 @@ function renderMembers(members) {
   membersEl.innerHTML = members.map((member) => `
     <article class="member-card">
       <div class="member-head">
-        <div>
-          <p class="section-kicker">${escapeHtml(member.provider)}</p>
-          <h3>${escapeHtml(member.name)}</h3>
+        <div class="model-title">
+          ${modelAvatar(member)}
+          <div>
+            <p class="section-kicker">${escapeHtml(member.provider)}</p>
+            <h3>${escapeHtml(member.name)}</h3>
+          </div>
         </div>
         <span class="stance ${escapeHtml(member.stance)}">${formatStance(member.stance)}</span>
       </div>
@@ -172,6 +178,11 @@ function compactBlock(title, items = [], limit = 3) {
   `;
 }
 
+function modelAvatar(member) {
+  if (!member.avatarUrl) return "";
+  return `<img class="model-avatar" src="${escapeHtml(member.avatarUrl)}" alt="${escapeHtml(member.name)} logo" loading="lazy" />`;
+}
+
 function normalizeItems(items = []) {
   if (!Array.isArray(items)) items = [items];
   return items.map((item) => String(item || "").trim()).filter(Boolean);
@@ -180,7 +191,7 @@ function normalizeItems(items = []) {
 function setLoading(value) {
   state.loading = value;
   runButton.disabled = value;
-  runButton.textContent = value ? "分析中" : "启动议会";
+  runButton.textContent = value ? "分析中" : "启动 MAGI";
 }
 
 function loadSample() {
