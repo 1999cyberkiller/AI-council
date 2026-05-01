@@ -25,7 +25,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "GET" && url.pathname === "/health") {
       return sendJson(res, {
         ok: true,
-        service: "AI 金融议会",
+        service: "MAGI SYSTEM",
         uptime_seconds: Math.round(process.uptime()),
         generated_at: new Date().toISOString()
       });
@@ -55,7 +55,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(port, host, () => {
-  console.log(`AI 金融议会已启动：http://${host}:${port}`);
+  console.log(`MAGI SYSTEM 已启动：http://${host}:${port}`);
 });
 
 process.on("SIGINT", shutdown);
@@ -63,7 +63,7 @@ process.on("SIGTERM", shutdown);
 
 function shutdown() {
   server.close(() => {
-    console.log("AI 金融议会已停止。");
+    console.log("MAGI SYSTEM 已停止。");
     process.exit(0);
   });
 }
