@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 金融议会</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="masthead">
+        <div>
+          <p class="eyebrow">AI Financial Council</p>
+          <h1>AI 金融议会</h1>
+        </div>
+        <div class="live-pill" id="status">连接中</div>
+      </header>
+
+      <section class="brief-board" aria-label="分析输入">
+        <div class="brief-copy">
+          <p class="section-kicker">Brief</p>
+          <h2>把一个金融问题交给四位独立议员。</h2>
+          <p>他们并行分析，主席只整理共识、分歧和少数派意见。</p>
+        </div>
+        <form class="brief-form" id="briefForm">
+          <label for="question">问题</label>
+          <textarea id="question" spellcheck="true">未来 6 个月是否应该提高 AI 半导体股票的配置比例？</textarea>
+
+          <label for="context">约束</label>
+          <textarea id="context" spellcheck="true" class="small">风险承受能力：中等。更重视回撤控制，希望每个结论都给出会改变判断的触发条件。</textarea>
+
+          <div class="actions-row">
+            <button id="runButton" type="submit">启动议会</button>
+            <button id="sampleButton" type="button" class="secondary">示例</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="decision-board" id="decisionPanel">
+        <div class="empty-state">
+          <p class="section-kicker">Decision Memo</p>
+          <h2>等待议会分析</h2>
+          <p>结果会压缩成一份可执行备忘录。先看方向，再看分歧，最后看证据。</p>
+        </div>
+      </section>
+
+      <section class="signal-strip" aria-label="议会状态">
+        <div class="signal-card">
+          <span>议员</span>
+          <strong id="memberCount">0</strong>
+        </div>
+        <div class="signal-card">
+          <span>主席</span>
+          <strong id="chairModel">未连接</strong>
+        </div>
+        <div class="signal-card">
+          <span>证据源</span>
+          <strong id="toolEvidenceCount">0</strong>
+        </div>
+      </section>
+
+      <section class="council-board">
+        <div class="section-title">
+          <p class="section-kicker">Council</p>
+          <h2>四席摘要</h2>
+        </div>
+        <div class="member-grid" id="members"></div>
+      </section>
+
+      <section class="evidence-board">
+        <div class="section-title">
+          <p class="section-kicker">Evidence</p>
+          <h2>证据快照</h2>
+        </div>
+        <div class="evidence-grid" id="toolEvidence"></div>
+      </section>
+
+      <details class="system-details">
+        <summary>系统配置</summary>
+        <div class="system-grid">
+          <div id="councilList"></div>
+          <div id="toolList"></div>
+        </div>
+      </details>
+    </main>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
