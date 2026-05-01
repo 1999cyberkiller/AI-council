@@ -358,6 +358,28 @@ button:disabled {
   align-items: flex-start;
 }
 
+.model-title {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.model-title h3 {
+  margin-bottom: 0;
+}
+
+.model-avatar {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: #fff;
+  object-fit: contain;
+  padding: 5px;
+}
+
 .stance.agree {
   color: var(--good);
 }
@@ -449,6 +471,20 @@ button:disabled {
 .system-grid strong,
 .system-grid span {
   display: block;
+}
+
+.system-grid strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.system-grid .model-avatar {
+  width: 22px;
+  height: 22px;
+  flex-basis: 22px;
+  border-radius: 6px;
+  padding: 3px;
 }
 
 .system-grid span {
