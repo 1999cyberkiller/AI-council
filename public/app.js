@@ -7,22 +7,17 @@ const briefForm = document.querySelector("#briefForm");
 const questionEl = document.querySelector("#question");
 const contextEl = document.querySelector("#context");
 const runButton = document.querySelector("#runButton");
-const sampleButton = document.querySelector("#sampleButton");
 const decisionPanel = document.querySelector("#decisionPanel");
 const membersEl = document.querySelector("#members");
-const memberCount = document.querySelector("#memberCount");
 const councilList = document.querySelector("#councilList");
 const toolList = document.querySelector("#toolList");
 const statusEl = document.querySelector("#status");
-const liveModelCount = document.querySelector("#liveModelCount");
 const toolEvidence = document.querySelector("#toolEvidence");
-const toolEvidenceCount = document.querySelector("#toolEvidenceCount");
 
 briefForm.addEventListener("submit", (event) => {
   event.preventDefault();
   runCouncil();
 });
-sampleButton.addEventListener("click", loadSample);
 
 loadConfig();
 
@@ -43,7 +38,6 @@ async function runCouncil() {
   `;
   membersEl.innerHTML = "";
   toolEvidence.innerHTML = "";
-  toolEvidenceCount.textContent = "0";
 
   try {
     const response = await fetch("/api/analyze", {
@@ -74,9 +68,6 @@ function renderConfig() {
   const members = state.config.council.members;
   const liveCount = members.filter((member) => member.configured).length;
   statusEl.textContent = liveCount ? `${liveCount} 个模型在线` : "演示模式";
-  memberCount.textContent = String(members.length);
-  liveModelCount.textContent = String(liveCount);
-  toolEvidenceCount.textContent = String(state.config.tools.length);
 
   membersEl.innerHTML = members.map((member) => `
     <article class="member-card dormant">
@@ -88,12 +79,14 @@ function renderConfig() {
         </div>
       </div>
       <p>${escapeHtml(member.role)}</p>
-      <span class="status-line">${member.configured ? "已接入" : "演示"}</span>
     </article>
   `).join("");
 
   councilList.innerHTML = members.map((member) => `
-    <p><strong>${modelAvatar(member)}${escapeHtml(member.name)}</strong><span>${escapeHtml(shortModel(member.model))}</span></p>
+    <p class="model-row">
+      <strong>${modelAvatar(member)}<span class="model-name">${escapeHtml(member.name)}${statusDot(member.configured)}</span></strong>
+      <span>${escapeHtml(shortModel(member.model))}</span>
+    </p>
   `).join("");
 
   toolList.innerHTML = state.config.tools.map((tool) => `
@@ -131,7 +124,6 @@ function renderDecision(decision, aggregate) {
 }
 
 function renderMembers(members) {
-  memberCount.textContent = String(members.length);
   membersEl.innerHTML = members.map((member) => `
     <article class="member-card">
       <div class="member-head">
@@ -157,7 +149,6 @@ function renderMembers(members) {
 
 function renderToolEvidence(tools) {
   const useful = tools.filter((tool) => tool.status !== "skipped").slice(0, 4);
-  toolEvidenceCount.textContent = String(useful.length);
   toolEvidence.innerHTML = useful.map((tool) => `
     <article class="evidence-card">
       <p class="section-kicker">${escapeHtml(tool.source || "local")}</p>
@@ -192,11 +183,6 @@ function setLoading(value) {
   state.loading = value;
   runButton.disabled = value;
   runButton.textContent = value ? "分析中" : "启动 MAGI";
-}
-
-function loadSample() {
-  questionEl.value = "台积电回撤 12% 后，是否应该加仓，还是继续等待更低的买入价格？";
-  contextEl.value = "投资期限：6 至 12 个月。当前组合已经持有 Nvidia 敞口。我更重视回撤控制，而不是追上每一段上涨。";
 }
 
 function summarizeToolResult(tool) {
@@ -259,6 +245,11 @@ function percent(value) {
 
 function shortModel(value = "") {
   return String(value).split("/").pop().replace(/-/g, " ");
+}
+
+function statusDot(configured) {
+  const label = configured ? "在线" : "掉线";
+  return `<i class="status-dot ${configured ? "online" : "offline"}" aria-label="${label}" title="${label}"></i>`;
 }
 
 function escapeHtml(value) {
