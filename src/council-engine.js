@@ -49,7 +49,7 @@ export async function analyzeWithCouncil({ question, context = "", selectedMembe
   }
 
   const enabledTools = unique(members.flatMap((member) => member.allowedTools || []));
-  const toolOutputs = await runFinanceTools({ question, context, enabledTools });
+  const toolOutputs = await collectToolOutputs({ question, context, enabledTools });
 
   const memberResults = await Promise.all(
     members.map(async (member) => {
@@ -114,6 +114,24 @@ export async function analyzeWithCouncil({ question, context = "", selectedMembe
     aggregate,
     decision
   };
+}
+
+async function collectToolOutputs({ question, context, enabledTools }) {
+  try {
+    return await runFinanceTools({ question, context, enabledTools });
+  } catch (error) {
+    return [
+      {
+        id: "tool_runtime_error",
+        name: "资源调用",
+        status: "error",
+        source: "local",
+        result: {
+          error: error.message || "资源调用失败。"
+        }
+      }
+    ];
+  }
 }
 
 function buildMemberPrompt({ question, context, toolText, member }) {
