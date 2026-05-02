@@ -25,7 +25,7 @@ export function getDefaultCouncil() {
         role: "共识叙事、拥挤交易、隐含假设、可证伪反向观点",
         provider: "xai",
         model: process.env.XAI_MODEL || "grok-4-fast-non-reasoning",
-        avatarUrl: "https://grok.com/images/favicon-light.png",
+        avatarUrl: "https://www.google.com/s2/favicons?domain=grok.com&sz=128",
         allowedTools: ["scenario_matrix", "risk_register", "fundamentals", "web_research"]
       },
       {
