@@ -100,13 +100,16 @@ function renderDecision(decision, aggregate) {
   decisionPanel.innerHTML = `
     <div class="memo-primary">
       <p class="section-kicker">Decision Memo</p>
-      <h2>${safeText(decision.final_decision || formatStance(decision.decision))}</h2>
+      <div class="memo-final">
+        <span>最终决策</span>
+        <h2>${safeText(decision.final_decision || formatStance(decision.decision))}</h2>
+      </div>
       <p class="lead"><strong>${safeText(decision.rationale || aggregate.summary || "")}</strong></p>
     </div>
     <div class="memo-secondary">
-      ${compactBlock("分歧", decision.disagreements)}
-      ${compactBlock("共识", decision.consensus || decision.consensus_zone)}
-      ${compactBlock("建议", decision.recommendation || [decision.action])}
+      ${featuredBlock("分歧", decision.disagreements)}
+      ${featuredBlock("共识", decision.consensus || decision.consensus_zone)}
+      ${featuredBlock("建议", decision.recommendation || [decision.action])}
     </div>
   `;
 }
@@ -212,11 +215,11 @@ function renderEvidenceErrors(tool) {
   `).join("");
 }
 
-function compactBlock(title, items = [], limit = 3) {
+function featuredBlock(title, items = [], limit = 3) {
   const clean = normalizeItems(items).slice(0, limit);
   if (!clean.length) return "";
   return `
-    <section class="compact-block">
+    <section class="featured-card">
       <h4>${safeText(title)}</h4>
       <ul>${clean.map((item) => `<li>${safeText(item)}</li>`).join("")}</ul>
     </section>
