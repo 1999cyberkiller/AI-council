@@ -189,16 +189,34 @@ async function readJsonOrThrow(response) {
 }
 
 function demoResponse({ provider, model, system, user }) {
+  if (system.includes("最终备忘录整理员")) {
+    return JSON.stringify({
+      final_decision: "分歧",
+      disagreements: [
+        "四个模型对证据强度和执行时点的权重不同。",
+        "部分模型更重视估值和回撤，部分模型更重视趋势和政策窗口。"
+      ],
+      consensus: [
+        "需要把实时行情、财报质量和外部研究证据放在同一框架内核验。",
+        "不能只依据单一模型或单一数据源做决定。"
+      ],
+      recommendation: [
+        "先补齐关键证据，再决定是否执行。",
+        "如果执行，应采用分阶段方式，并设置明确的风险触发条件。"
+      ]
+    });
+  }
+
   const role = system.match(/角色：(.+)/)?.[1] || "分析模型";
   const question = user.match(/问题：\n([\s\S]*?)\n\n/)?.[1]?.trim() || user.slice(0, 180);
   const stanceMap = {
     openai: "agree",
-    deepseek: "agree_with_conditions",
-    anthropic: "agree_with_conditions",
+    deepseek: "agree",
+    anthropic: "divided",
     google: "disagree",
-    xai: "agree_with_conditions",
-    nvidia: "agree_with_conditions",
-    minimax: "agree_with_conditions",
+    xai: "divided",
+    nvidia: "divided",
+    minimax: "divided",
     "custom-openai": "agree"
   };
   const directionMap = {
@@ -211,15 +229,23 @@ function demoResponse({ provider, model, system, user }) {
     minimax: "跨证据整合后有条件执行"
   };
 
-  const stance = stanceMap[provider] || "agree_with_conditions";
+  const stance = stanceMap[provider] || "divided";
   const probability = stance === "agree" ? 0.64 : stance === "disagree" ? 0.38 : 0.53;
+  const decisionLabel = stance === "agree" ? "同意" : stance === "disagree" ? "不同意" : "分歧";
 
   return JSON.stringify({
     stance,
+    decision_label: decisionLabel,
     probability,
     direction: directionMap[provider] || "中性",
     confidence: providerConfigured(provider) ? 0.6 : 0.32,
     time_horizon: "3 至 12 个月",
+    detailed_analysis: `${role}对“${question}”的演示判断：该决策取决于估值水平、流动性环境、盈利预期修正和下行不对称风险。当前尚未配置 API key，因此只能展示 MAGI SYSTEM 的分析结构。真实模型接入后，本段会变成该模型在 500 字以内的完整分析摘要。`,
+    main_conclusions: [
+      "当前尚未配置 API key，因此返回演示分析。",
+      "在 .env 中填入模型配置后，可切换为真实模型分析。",
+      "MAGI SYSTEM 的并行分析、投票和综合流程已生效。"
+    ],
     thesis: `${role}对“${question}”的演示判断：该决策取决于估值水平、流动性环境、盈利预期修正和下行不对称风险。`,
     key_evidence: [
       "当前尚未配置 API key，因此返回演示分析。",
