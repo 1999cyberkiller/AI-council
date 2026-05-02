@@ -24,7 +24,7 @@
       "role": "共识叙事、拥挤交易、隐含假设、可证伪反向观点",
       "provider": "xai",
       "modelEnv": "XAI_MODEL",
-      "avatarUrl": "https://grok.com/images/favicon-light.png",
+      "avatarUrl": "https://www.google.com/s2/favicons?domain=grok.com&sz=128",
       "allowedTools": ["scenario_matrix", "risk_register", "fundamentals", "web_research"]
     },
     {
