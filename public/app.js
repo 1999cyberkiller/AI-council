@@ -73,10 +73,7 @@ function renderConfig() {
     <article class="member-card dormant">
       <div class="model-title">
         ${modelAvatar(member)}
-        <div>
-          <p class="section-kicker">${escapeHtml(member.provider)}</p>
-          <h3>${escapeHtml(member.name)}</h3>
-        </div>
+        <h3>${escapeHtml(member.name)}</h3>
       </div>
       <p>${escapeHtml(member.role)}</p>
     </article>
@@ -101,24 +98,16 @@ function renderResult(result) {
 }
 
 function renderDecision(decision, aggregate) {
-  const probability = percent(decision.probability);
-  const confidence = percent(decision.confidence);
   decisionPanel.innerHTML = `
     <div class="memo-primary">
       <p class="section-kicker">Decision Memo</p>
-      <h2>${formatStance(decision.decision)}</h2>
-      <p class="lead">${escapeHtml(decision.rationale)}</p>
-      <div class="metric-row">
-        <span><strong>${probability}</strong> 决策概率</span>
-        <span><strong>${confidence}</strong> 综合信心</span>
-        <span><strong>${escapeHtml(decision.direction || aggregate.direction)}</strong> 方向</span>
-      </div>
+      <h2>${escapeHtml(decision.final_decision || formatStance(decision.decision))}</h2>
+      <p class="lead"><strong>${escapeHtml(decision.rationale || aggregate.summary || "")}</strong></p>
     </div>
     <div class="memo-secondary">
-      ${compactBlock("下一步", [decision.action])}
-      ${compactBlock("关键分歧", decision.disagreements)}
-      ${compactBlock("少数派", [decision.minority_opinion_preserved])}
-      ${compactBlock("观察项", decision.watchlist)}
+      ${compactBlock("分歧", decision.disagreements)}
+      ${compactBlock("共识", decision.consensus || decision.consensus_zone)}
+      ${compactBlock("建议", decision.recommendation || [decision.action])}
     </div>
   `;
 }
@@ -129,20 +118,19 @@ function renderMembers(members) {
       <div class="member-head">
         <div class="model-title">
           ${modelAvatar(member)}
-          <div>
-            <p class="section-kicker">${escapeHtml(member.provider)}</p>
-            <h3>${escapeHtml(member.name)}</h3>
-          </div>
+          <h3>${escapeHtml(member.name)}</h3>
         </div>
-        <span class="stance ${escapeHtml(member.stance)}">${formatStance(member.stance)}</span>
       </div>
-      <p class="thesis">${escapeHtml(member.thesis)}</p>
-      <div class="mini-metrics">
-        <span>${percent(member.probability)} 概率</span>
-        <span>${percent(member.confidence)} 信心</span>
+      <div class="analysis-scroll">
+        <section class="analysis-block">
+          <h4>详细分析</h4>
+          <p>${escapeHtml(member.detailed_analysis || member.thesis)}</p>
+        </section>
+        <section class="analysis-block">
+          <h4>主要结论</h4>
+          <ul>${normalizeItems(member.main_conclusions || member.key_evidence).slice(0, 4).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+        </section>
       </div>
-      ${compactBlock("假设", member.key_assumptions, 2)}
-      ${compactBlock("会改观点", member.what_would_change_my_mind, 2)}
     </article>
   `).join("");
 }
@@ -150,11 +138,78 @@ function renderMembers(members) {
 function renderToolEvidence(tools) {
   const useful = tools.filter((tool) => tool.status !== "skipped").slice(0, 4);
   toolEvidence.innerHTML = useful.map((tool) => `
-    <article class="evidence-card">
+    <article class="evidence-card ${escapeHtml(tool.id)}">
       <p class="section-kicker">${escapeHtml(tool.source || "local")}</p>
       <h3>${escapeHtml(tool.name)}</h3>
-      <p>${escapeHtml(summarizeToolResult(tool))}</p>
+      ${renderEvidenceBody(tool)}
     </article>
+  `).join("");
+}
+
+function renderEvidenceBody(tool) {
+  if (tool.id === "market_data") return renderQuoteEvidence(tool);
+  if (tool.id === "fundamentals") return renderFundamentalEvidence(tool);
+  return `<p>${escapeHtml(summarizeToolResult(tool))}</p>`;
+}
+
+function renderQuoteEvidence(tool) {
+  const quotes = (tool.result?.quotes || []).slice(0, 4);
+  if (!quotes.length) return `<p>${escapeHtml(summarizeToolResult(tool))}</p>`;
+  return `
+    <div class="evidence-list">
+      ${quotes.map((quote) => `
+        <div class="evidence-item">
+          <div class="evidence-topline">
+            <strong>${escapeHtml(quote.symbol)}</strong>
+            <span>${escapeHtml(marketLabel(quote.market))}</span>
+          </div>
+          <p>${escapeHtml(quote.name || quote.exchange || quote.currency || "行情")}</p>
+          <div class="evidence-metrics">
+            <span>${escapeHtml(formatPrice(quote.regular_market_price ?? quote.last_close, quote.currency))}</span>
+            <span class="${Number(quote.change_pct) >= 0 ? "up" : "down"}">${escapeHtml(formatPct(quote.change_pct))}</span>
+          </div>
+        </div>
+      `).join("")}
+      ${renderEvidenceErrors(tool)}
+    </div>
+  `;
+}
+
+function renderFundamentalEvidence(tool) {
+  const companies = (tool.result?.companies || []).slice(0, 4);
+  if (!companies.length) return `<p>${escapeHtml(summarizeToolResult(tool))}</p>`;
+  return `
+    <div class="evidence-list">
+      ${companies.map((company) => `
+        <div class="evidence-item">
+          <div class="evidence-topline">
+            <strong>${escapeHtml(company.symbol)}</strong>
+            <span>${escapeHtml(marketLabel(company.market))}</span>
+          </div>
+          <p>${escapeHtml(company.company || company.note || "基本面")}</p>
+          <div class="evidence-metrics">
+            <span>营收 ${escapeHtml(formatMoney(company.metrics?.revenue))}</span>
+            <span>净利 ${escapeHtml(formatMoney(company.metrics?.net_income))}</span>
+            ${company.market === "CN" ? `<span>ROE ${escapeHtml(formatPct(company.metrics?.roe?.value))}</span>` : ""}
+          </div>
+          ${company.report_date ? `<p class="evidence-foot">${escapeHtml(company.report_type || "报告期")} ${escapeHtml(company.report_date)}</p>` : ""}
+        </div>
+      `).join("")}
+      ${renderEvidenceErrors(tool)}
+    </div>
+  `;
+}
+
+function renderEvidenceErrors(tool) {
+  const errors = tool.result?.errors || [];
+  return errors.slice(0, 2).map((item) => `
+    <div class="evidence-item evidence-error">
+      <div class="evidence-topline">
+        <strong>${escapeHtml(marketLabel(item.market))}</strong>
+        <span>数据源失败</span>
+      </div>
+      <p>${escapeHtml(item.source || "external")} ${escapeHtml(item.error || "无返回")}</p>
+    </div>
   `).join("");
 }
 
@@ -193,7 +248,8 @@ function summarizeToolResult(tool) {
     return quotes.map((quote) => {
       const price = quote.regular_market_price ?? quote.last_close ?? quote.bid ?? "无价格";
       const change = quote.change_pct == null ? "" : `，${quote.change_pct}%`;
-      return `${quote.symbol} ${price}${change}`;
+      const market = quote.market ? `${marketLabel(quote.market)} ` : "";
+      return `${market}${quote.symbol} ${price}${change}`;
     }).join("；");
   }
   if (tool.id === "fundamentals") {
@@ -202,7 +258,8 @@ function summarizeToolResult(tool) {
     return companies.map((company) => {
       const revenue = company.metrics?.revenue?.value;
       const netIncome = company.metrics?.net_income?.value;
-      return `${company.symbol} 营收 ${formatNumber(revenue)}，净利润 ${formatNumber(netIncome)}`;
+      const market = company.market ? `${marketLabel(company.market)} ` : "";
+      return `${market}${company.symbol} 营收 ${formatNumber(revenue)}，净利润 ${formatNumber(netIncome)}`;
     }).join("；");
   }
   if (tool.id === "web_research") {
@@ -219,6 +276,35 @@ function summarizeToolResult(tool) {
   return result.error || result.reason || "工具已完成。";
 }
 
+function marketLabel(value) {
+  if (value === "CN") return "A股";
+  if (value === "US") return "美股";
+  return value || "市场";
+}
+
+function formatPrice(value, currency) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "无价格";
+  const unit = currency === "CNY" ? "¥" : currency === "USD" ? "$" : "";
+  return `${unit}${number.toFixed(number >= 100 ? 2 : 3)}`;
+}
+
+function formatPct(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "无涨跌";
+  return `${number > 0 ? "+" : ""}${number.toFixed(2)}%`;
+}
+
+function formatMoney(fact) {
+  if (!fact || fact.value == null) return "无";
+  const unit = fact.unit || "";
+  const number = Number(fact.value);
+  if (!Number.isFinite(number)) return "无";
+  if (unit.includes("CNY")) return `${(number / 1e8).toFixed(2)}亿`;
+  if (unit.includes("USD")) return formatNumber(number);
+  return `${formatNumber(number)}${unit}`;
+}
+
 function formatNumber(value) {
   const number = Number(value);
   if (!Number.isFinite(number)) return "无";
@@ -230,9 +316,10 @@ function formatNumber(value) {
 function formatStance(value) {
   const map = {
     agree: "赞同",
-    disagree: "反对",
-    agree_with_conditions: "有条件",
-    abstain: "弃权"
+    disagree: "不赞同",
+    divided: "分歧",
+    agree_with_conditions: "分歧",
+    abstain: "分歧"
   };
   return map[value] || value || "未定";
 }
