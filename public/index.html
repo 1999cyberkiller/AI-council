@@ -17,16 +17,14 @@
         <div class="live-pill" id="status">连接中</div>
       </header>
 
-      <section class="brief-board" aria-label="分析输入">
-        <form class="brief-form" id="briefForm">
-          <label for="question">问题</label>
-          <textarea id="question" spellcheck="true" placeholder="输入需要判断的标的、时间窗口与决策问题"></textarea>
-
-          <label for="context">约束</label>
-          <textarea id="context" spellcheck="true" class="small" placeholder="输入仓位、风险偏好、已有持仓、不可接受的风险"></textarea>
-
-          <div class="actions-row">
-            <button id="runButton" type="submit">启动 MAGI</button>
+      <section class="brief-board prompt-board" aria-label="分析输入">
+        <form class="prompt-form" id="briefForm">
+          <label class="sr-only" for="question">问题</label>
+          <div class="prompt-box">
+            <textarea id="question" spellcheck="true" rows="3" placeholder="输入问题、标的、时间窗口、仓位和风险约束"></textarea>
+            <button class="send-button" id="runButton" type="submit" aria-label="启动 MAGI">
+              <span aria-hidden="true">↑</span>
+            </button>
           </div>
         </form>
       </section>
@@ -42,7 +40,7 @@
       <section class="council-board">
         <div class="section-title">
           <p class="section-kicker">Council</p>
-          <h2>AI分析</h2>
+          <h2>AI 分析</h2>
         </div>
         <div class="member-grid" id="members"></div>
       </section>
