@@ -24,14 +24,13 @@
         </div>
         <form class="brief-form" id="briefForm">
           <label for="question">问题</label>
-          <textarea id="question" spellcheck="true">未来 6 个月是否应该提高 AI 半导体股票的配置比例？</textarea>
+          <textarea id="question" spellcheck="true" placeholder="输入需要判断的标的、时间窗口与决策问题"></textarea>
 
           <label for="context">约束</label>
-          <textarea id="context" spellcheck="true" class="small">风险承受能力：中等。更重视回撤控制，希望每个结论都给出会改变判断的触发条件。</textarea>
+          <textarea id="context" spellcheck="true" class="small" placeholder="输入仓位、风险偏好、已有持仓、不可接受的风险"></textarea>
 
           <div class="actions-row">
             <button id="runButton" type="submit">启动 MAGI</button>
-            <button id="sampleButton" type="button" class="secondary">示例</button>
           </div>
         </form>
       </section>
@@ -41,21 +40,6 @@
           <p class="section-kicker">Decision Memo</p>
           <h2>等待 MAGI 分析</h2>
           <p>结果会压缩成一份可执行备忘录。先看方向，再看分歧，最后看证据。</p>
-        </div>
-      </section>
-
-      <section class="signal-strip" aria-label="MAGI 状态">
-        <div class="signal-card">
-          <span>模型</span>
-          <strong id="memberCount">0</strong>
-        </div>
-        <div class="signal-card">
-          <span>在线</span>
-          <strong id="liveModelCount">0</strong>
-        </div>
-        <div class="signal-card">
-          <span>证据源</span>
-          <strong id="toolEvidenceCount">0</strong>
         </div>
       </section>
 
@@ -78,8 +62,14 @@
       <details class="system-details">
         <summary>系统配置</summary>
         <div class="system-grid">
-          <div id="councilList"></div>
-          <div id="toolList"></div>
+          <section>
+            <h3>模型</h3>
+            <div id="councilList"></div>
+          </section>
+          <section>
+            <h3>资源</h3>
+            <div id="toolList"></div>
+          </section>
         </div>
       </details>
     </main>
