@@ -5,7 +5,6 @@ const state = {
 
 const briefForm = document.querySelector("#briefForm");
 const questionEl = document.querySelector("#question");
-const contextEl = document.querySelector("#context");
 const runButton = document.querySelector("#runButton");
 const decisionPanel = document.querySelector("#decisionPanel");
 const membersEl = document.querySelector("#members");
@@ -45,10 +44,10 @@ async function runCouncil() {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         question: questionEl.value,
-        context: contextEl.value
+        context: ""
       })
     });
-    const result = await response.json();
+    const result = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(result.error || "分析失败。");
     renderResult(result);
   } catch (error) {
@@ -56,7 +55,7 @@ async function runCouncil() {
       <div class="empty-state">
         <p class="section-kicker">Decision Memo</p>
         <h2>分析失败</h2>
-        <p>${escapeHtml(error.message)}</p>
+        <p>${safeText(error.message)}</p>
       </div>
     `;
   } finally {
@@ -75,19 +74,19 @@ function renderConfig() {
         ${modelAvatar(member)}
         <h3>${escapeHtml(member.name)}</h3>
       </div>
-      <p>${escapeHtml(member.role)}</p>
+      <p>${safeText(member.role)}</p>
     </article>
   `).join("");
 
   councilList.innerHTML = members.map((member) => `
     <p class="model-row">
       <strong>${modelAvatar(member)}<span class="model-name">${escapeHtml(member.name)}${statusDot(member.configured)}</span></strong>
-      <span>${escapeHtml(shortModel(member.model))}</span>
+      <span>${safeText(shortModel(member.model))}</span>
     </p>
   `).join("");
 
   toolList.innerHTML = state.config.tools.map((tool) => `
-    <p><strong>${escapeHtml(tool.name)}</strong><span>${escapeHtml(tool.description)}</span></p>
+    <p><strong>${safeText(tool.name)}</strong><span>${safeText(tool.description)}</span></p>
   `).join("");
 }
 
@@ -101,8 +100,8 @@ function renderDecision(decision, aggregate) {
   decisionPanel.innerHTML = `
     <div class="memo-primary">
       <p class="section-kicker">Decision Memo</p>
-      <h2>${escapeHtml(decision.final_decision || formatStance(decision.decision))}</h2>
-      <p class="lead"><strong>${escapeHtml(decision.rationale || aggregate.summary || "")}</strong></p>
+      <h2>${safeText(decision.final_decision || formatStance(decision.decision))}</h2>
+      <p class="lead"><strong>${safeText(decision.rationale || aggregate.summary || "")}</strong></p>
     </div>
     <div class="memo-secondary">
       ${compactBlock("分歧", decision.disagreements)}
@@ -124,11 +123,11 @@ function renderMembers(members) {
       <div class="analysis-scroll">
         <section class="analysis-block">
           <h4>详细分析</h4>
-          <p>${escapeHtml(member.detailed_analysis || member.thesis)}</p>
+          <p>${safeText(member.detailed_analysis || member.thesis)}</p>
         </section>
         <section class="analysis-block">
           <h4>主要结论</h4>
-          <ul>${normalizeItems(member.main_conclusions || member.key_evidence).slice(0, 4).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+          <ul>${normalizeItems(member.main_conclusions || member.key_evidence).slice(0, 4).map((item) => `<li>${safeText(item)}</li>`).join("")}</ul>
         </section>
       </div>
     </article>
@@ -139,8 +138,8 @@ function renderToolEvidence(tools) {
   const useful = tools.filter((tool) => tool.status !== "skipped").slice(0, 4);
   toolEvidence.innerHTML = useful.map((tool) => `
     <article class="evidence-card ${escapeHtml(tool.id)}">
-      <p class="section-kicker">${escapeHtml(tool.source || "local")}</p>
-      <h3>${escapeHtml(tool.name)}</h3>
+      <p class="section-kicker">${safeText(tool.source || "local")}</p>
+      <h3>${safeText(tool.name)}</h3>
       ${renderEvidenceBody(tool)}
     </article>
   `).join("");
@@ -149,21 +148,21 @@ function renderToolEvidence(tools) {
 function renderEvidenceBody(tool) {
   if (tool.id === "market_data") return renderQuoteEvidence(tool);
   if (tool.id === "fundamentals") return renderFundamentalEvidence(tool);
-  return `<p>${escapeHtml(summarizeToolResult(tool))}</p>`;
+  return `<p>${safeText(summarizeToolResult(tool))}</p>`;
 }
 
 function renderQuoteEvidence(tool) {
   const quotes = (tool.result?.quotes || []).slice(0, 4);
-  if (!quotes.length) return `<p>${escapeHtml(summarizeToolResult(tool))}</p>`;
+  if (!quotes.length) return `<p>${safeText(summarizeToolResult(tool))}</p>`;
   return `
     <div class="evidence-list">
       ${quotes.map((quote) => `
         <div class="evidence-item">
           <div class="evidence-topline">
             <strong>${escapeHtml(quote.symbol)}</strong>
-            <span>${escapeHtml(marketLabel(quote.market))}</span>
+            <span>${safeText(marketLabel(quote.market))}</span>
           </div>
-          <p>${escapeHtml(quote.name || quote.exchange || quote.currency || "行情")}</p>
+          <p>${safeText(quote.name || quote.exchange || quote.currency || "行情")}</p>
           <div class="evidence-metrics">
             <span>${escapeHtml(formatPrice(quote.regular_market_price ?? quote.last_close, quote.currency))}</span>
             <span class="${Number(quote.change_pct) >= 0 ? "up" : "down"}">${escapeHtml(formatPct(quote.change_pct))}</span>
@@ -177,22 +176,22 @@ function renderQuoteEvidence(tool) {
 
 function renderFundamentalEvidence(tool) {
   const companies = (tool.result?.companies || []).slice(0, 4);
-  if (!companies.length) return `<p>${escapeHtml(summarizeToolResult(tool))}</p>`;
+  if (!companies.length) return `<p>${safeText(summarizeToolResult(tool))}</p>`;
   return `
     <div class="evidence-list">
       ${companies.map((company) => `
         <div class="evidence-item">
           <div class="evidence-topline">
             <strong>${escapeHtml(company.symbol)}</strong>
-            <span>${escapeHtml(marketLabel(company.market))}</span>
+            <span>${safeText(marketLabel(company.market))}</span>
           </div>
-          <p>${escapeHtml(company.company || company.note || "基本面")}</p>
+          <p>${safeText(company.company || company.note || "基本面")}</p>
           <div class="evidence-metrics">
             <span>营收 ${escapeHtml(formatMoney(company.metrics?.revenue))}</span>
             <span>净利 ${escapeHtml(formatMoney(company.metrics?.net_income))}</span>
             ${company.market === "CN" ? `<span>ROE ${escapeHtml(formatPct(company.metrics?.roe?.value))}</span>` : ""}
           </div>
-          ${company.report_date ? `<p class="evidence-foot">${escapeHtml(company.report_type || "报告期")} ${escapeHtml(company.report_date)}</p>` : ""}
+          ${company.report_date ? `<p class="evidence-foot">${safeText(company.report_type || "报告期")} ${safeText(company.report_date)}</p>` : ""}
         </div>
       `).join("")}
       ${renderEvidenceErrors(tool)}
@@ -205,10 +204,10 @@ function renderEvidenceErrors(tool) {
   return errors.slice(0, 2).map((item) => `
     <div class="evidence-item evidence-error">
       <div class="evidence-topline">
-        <strong>${escapeHtml(marketLabel(item.market))}</strong>
+        <strong>${safeText(marketLabel(item.market))}</strong>
         <span>数据源失败</span>
       </div>
-      <p>${escapeHtml(item.source || "external")} ${escapeHtml(item.error || "无返回")}</p>
+      <p>${safeText(item.source || "external")} ${safeText(item.error || "无返回")}</p>
     </div>
   `).join("");
 }
@@ -218,8 +217,8 @@ function compactBlock(title, items = [], limit = 3) {
   if (!clean.length) return "";
   return `
     <section class="compact-block">
-      <h4>${escapeHtml(title)}</h4>
-      <ul>${clean.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+      <h4>${safeText(title)}</h4>
+      <ul>${clean.map((item) => `<li>${safeText(item)}</li>`).join("")}</ul>
     </section>
   `;
 }
@@ -237,7 +236,8 @@ function normalizeItems(items = []) {
 function setLoading(value) {
   state.loading = value;
   runButton.disabled = value;
-  runButton.textContent = value ? "分析中" : "启动 MAGI";
+  runButton.classList.toggle("loading", value);
+  runButton.setAttribute("aria-label", value ? "MAGI 分析中" : "启动 MAGI");
 }
 
 function summarizeToolResult(tool) {
@@ -346,4 +346,14 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function safeText(value) {
+  return escapeHtml(spaceCjkEnglish(value));
+}
+
+function spaceCjkEnglish(value) {
+  return String(value ?? "")
+    .replace(/([\u3400-\u9fff])([A-Za-z0-9][A-Za-z0-9.+/#-]*)/g, "$1 $2")
+    .replace(/([A-Za-z0-9][A-Za-z0-9.+/#-]*)([\u3400-\u9fff])/g, "$1 $2");
 }
