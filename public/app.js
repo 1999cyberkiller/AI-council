@@ -48,8 +48,18 @@ async function runCouncil() {
         context: contextEl.value
       })
     });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || "分析失败。");
+    const text = await response.text();
+    let result;
+    try {
+      result = text ? JSON.parse(text) : {};
+    } catch {
+      throw new Error(
+        response.ok
+          ? "服务端返回非 JSON 内容。"
+          : `网关返回 ${response.status}（可能是反向代理超时）。`
+      );
+    }
+    if (!response.ok) throw new Error(result.error || `请求失败 (${response.status})`);
     renderResult(result);
   } catch (error) {
     decisionPanel.innerHTML = `

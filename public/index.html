@@ -17,26 +17,28 @@
         <div class="live-pill" id="status">连接中</div>
       </header>
 
-      <section class="brief-board" aria-label="分析输入">
-        <form class="brief-form" id="briefForm">
-          <label for="question">问题</label>
-          <textarea id="question" spellcheck="true" placeholder="输入需要判断的标的、时间窗口与决策问题"></textarea>
+      <section class="workbench" aria-label="分析工作台">
+        <section class="brief-board" aria-label="分析输入">
+          <form class="brief-form" id="briefForm">
+            <label for="question">问题</label>
+            <textarea id="question" spellcheck="true" placeholder="输入需要判断的标的、时间窗口与决策问题"></textarea>
 
-          <label for="context">约束</label>
-          <textarea id="context" spellcheck="true" class="small" placeholder="输入仓位、风险偏好、已有持仓、不可接受的风险"></textarea>
+            <label for="context">约束</label>
+            <textarea id="context" spellcheck="true" class="small" placeholder="输入仓位、风险偏好、已有持仓、不可接受的风险"></textarea>
 
-          <div class="actions-row">
-            <button id="runButton" type="submit">启动 MAGI</button>
+            <div class="actions-row">
+              <button id="runButton" type="submit">启动 MAGI</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="decision-board" id="decisionPanel">
+          <div class="empty-state">
+            <p class="section-kicker">Decision Memo</p>
+            <h2>等待 MAGI 分析</h2>
+            <p>结果会压缩成一份可执行备忘录。先看方向，再看分歧，最后看证据。</p>
           </div>
-        </form>
-      </section>
-
-      <section class="decision-board" id="decisionPanel">
-        <div class="empty-state">
-          <p class="section-kicker">Decision Memo</p>
-          <h2>等待 MAGI 分析</h2>
-          <p>结果会压缩成一份可执行备忘录。先看方向，再看分歧，最后看证据。</p>
-        </div>
+        </section>
       </section>
 
       <section class="council-board">

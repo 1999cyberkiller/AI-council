@@ -1,5 +1,22 @@
 import { providerConfigured } from "./council-config.js";
 
+const MODEL_REQUEST_TIMEOUT_MS = 30000;
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = MODEL_REQUEST_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new Error(`模型 API 在 ${Math.round(timeoutMs / 1000)} 秒内未响应。`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function askModel({ provider, model, system, user, temperature = 0.2 }) {
   if (!providerConfigured(provider)) {
     return demoResponse({ provider, model, system, user });
@@ -107,7 +124,7 @@ async function askOpenAI({
     body.response_format = { type: "json_object" };
   }
 
-  const response = await fetch(`${baseUrl.replace(/\/$/, "")}/chat/completions`, {
+  const response = await fetchWithTimeout(`${baseUrl.replace(/\/$/, "")}/chat/completions`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -121,7 +138,7 @@ async function askOpenAI({
 }
 
 async function askAnthropic({ model, system, user, temperature }) {
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
+  const response = await fetchWithTimeout("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -147,7 +164,7 @@ async function askGemini({ model, system, user, temperature }) {
   );
   url.searchParams.set("key", process.env.GOOGLE_API_KEY);
 
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({

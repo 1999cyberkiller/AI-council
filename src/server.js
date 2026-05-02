@@ -50,6 +50,7 @@ const server = http.createServer(async (req, res) => {
 
     sendJson(res, { error: "未找到请求的资源。" }, 404);
   } catch (error) {
+    console.error(`[MAGI] ${req.method} ${req.url} →`, error);
     sendJson(res, { error: error.message || "服务端错误。" }, 500);
   }
 });

@@ -129,8 +129,15 @@ p {
   white-space: nowrap;
 }
 
-.brief-board {
+.workbench {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 18px;
+  align-items: stretch;
   margin-bottom: 22px;
+}
+
+.brief-board {
   padding: 18px;
   background: var(--ivory);
   border: 1px solid var(--border);
@@ -139,10 +146,14 @@ p {
 }
 
 .brief-form {
-  display: grid;
-  grid-template-columns: minmax(280px, 1fr) minmax(240px, 0.72fr) auto;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-  align-items: end;
+  height: 100%;
+}
+
+.brief-form .actions-row {
+  margin-top: auto;
 }
 
 label {
@@ -201,11 +212,10 @@ button:disabled {
 }
 
 .decision-board {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
-  gap: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
   min-height: 260px;
-  margin-bottom: 14px;
   padding: 24px;
   background: var(--near-black);
   border-radius: 8px;
@@ -584,8 +594,7 @@ button:disabled {
   }
 
   .masthead,
-  .brief-board,
-  .decision-board,
+  .workbench,
   .system-grid {
     grid-template-columns: 1fr;
   }
