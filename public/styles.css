@@ -109,7 +109,6 @@ p {
 }
 
 .live-pill,
-.status-line,
 .stance {
   display: inline-flex;
   align-items: center;
@@ -288,34 +287,6 @@ button:disabled {
   color: #d6d3ca;
 }
 
-.signal-strip {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
-.signal-card {
-  padding: 14px 16px;
-  background: var(--ivory);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
-
-.signal-card span {
-  display: block;
-  margin-bottom: 6px;
-  color: var(--olive);
-  font-size: 12px;
-}
-
-.signal-card strong {
-  color: var(--brand);
-  font-family: var(--serif);
-  font-size: 22px;
-  font-weight: 500;
-}
-
 .section-title {
   margin: 8px 0 12px;
   border-left: 4px solid var(--brand);
@@ -370,14 +341,14 @@ button:disabled {
 }
 
 .model-avatar {
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
-  border: 1px solid var(--border-strong);
-  border-radius: 8px;
-  background: #fff;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   object-fit: contain;
-  padding: 5px;
+  padding: 0;
 }
 
 .stance.agree {
@@ -468,8 +439,7 @@ button:disabled {
   font-size: 13px;
 }
 
-.system-grid strong,
-.system-grid span {
+.system-grid > section > div > p > span {
   display: block;
 }
 
@@ -480,15 +450,43 @@ button:disabled {
 }
 
 .system-grid .model-avatar {
-  width: 22px;
-  height: 22px;
-  flex-basis: 22px;
-  border-radius: 6px;
-  padding: 3px;
+  width: 20px;
+  height: 20px;
+  flex-basis: 20px;
 }
 
-.system-grid span {
+.system-grid > section > div > p > span {
   color: var(--stone);
+}
+
+.model-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.8fr) minmax(140px, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.model-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+  transform: translateY(1px);
+}
+
+.status-dot.online {
+  background: var(--good);
+}
+
+.status-dot.offline {
+  background: var(--bad);
 }
 
 @media (max-width: 1180px) {
@@ -506,9 +504,13 @@ button:disabled {
   .masthead,
   .brief-board,
   .decision-board,
-  .signal-strip,
   .system-grid {
     grid-template-columns: 1fr;
+  }
+
+  .model-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
   }
 
   .brief-board,
