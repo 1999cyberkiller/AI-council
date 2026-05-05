@@ -3,7 +3,9 @@ const state = {
   loading: false,
   loadingTimer: null,
   loadingProgress: 0,
-  loadingTick: 0
+  loadingTick: 0,
+  loadingStartedAt: 0,
+  loadingMembers: []
 };
 
 const glyphSet = "01MAGI$#<>[]{}+-=/\\AXIOMRISKCNUS";
@@ -49,7 +51,7 @@ async function runCouncil() {
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(result.error || "分析失败。");
-    stopLoadingSequence(100);
+    await completeLoadingSequence(result);
     renderResult(result);
   } catch (error) {
     stopLoadingSequence();
@@ -69,12 +71,18 @@ function startLoadingSequence() {
   stopLoadingSequence();
   state.loadingProgress = 4;
   state.loadingTick = 0;
+  state.loadingStartedAt = performance.now();
+  state.loadingMembers = loadingModels().map((name, index) => ({
+    name,
+    duration: 14000 + index * 2200 + (name.length % 5) * 850,
+    progress: 1,
+    finishStart: 0,
+    finishFrom: 0,
+    finishDuration: 0
+  }));
   renderLoadingDecision();
   state.loadingTimer = window.setInterval(() => {
     state.loadingTick += 1;
-    const remaining = 96 - state.loadingProgress;
-    const step = Math.max(0.4, remaining * 0.075);
-    state.loadingProgress = Math.min(96, state.loadingProgress + step);
     renderLoadingDecision();
   }, 520);
 }
@@ -82,20 +90,51 @@ function startLoadingSequence() {
 function stopLoadingSequence(progress) {
   if (state.loadingTimer) window.clearInterval(state.loadingTimer);
   state.loadingTimer = null;
+  state.loadingMembers = [];
   if (Number.isFinite(progress)) {
     state.loadingProgress = progress;
     renderLoadingDecision();
   }
 }
 
+function completeLoadingSequence(result) {
+  const members = state.loadingMembers.length ? state.loadingMembers : loadingModels().map((name) => ({ name, progress: 1 }));
+  const startedAt = performance.now();
+  state.loadingMembers = members.map((member) => {
+    const output = memberOutput(result, member.name);
+    const textLength = output.length || 120;
+    return {
+      ...member,
+      finishStart: startedAt,
+      finishFrom: currentMemberProgress(member, startedAt),
+      finishDuration: Math.min(2600, Math.max(760, 520 + textLength * 3.2))
+    };
+  });
+
+  return new Promise((resolve) => {
+    const finishTimer = window.setInterval(() => {
+      state.loadingTick += 1;
+      renderLoadingDecision();
+      if (state.loadingMembers.every((member) => currentMemberProgress(member) >= 100)) {
+        window.clearInterval(finishTimer);
+        stopLoadingSequence();
+        resolve();
+      }
+    }, 120);
+  });
+}
+
 function renderLoadingDecision() {
-  const total = Math.max(1, Math.round(state.loadingProgress));
-  const rows = loadingModels().map((name, index) => {
-    const offset = index * 7;
-    const value = Math.max(1, Math.min(99, total - offset + ((state.loadingTick + index) % 5)));
+  const members = state.loadingMembers.length
+    ? state.loadingMembers
+    : loadingModels().map((name) => ({ name, progress: 1, duration: 16000 }));
+  const progressValues = members.map((member) => currentMemberProgress(member));
+  const total = Math.max(1, Math.round(progressValues.reduce((sum, value) => sum + value, 0) / progressValues.length));
+  const rows = members.map((member, index) => {
+    const value = progressValues[index];
     return `
       <div class="model-load-row">
-        <span>${safeText(name)}</span>
+        <span>${safeText(member.name)}</span>
         <div class="model-load-track"><i style="width: ${value}%"></i></div>
         <strong>${value}%</strong>
       </div>
@@ -110,7 +149,7 @@ function renderLoadingDecision() {
       </div>
       <div class="screen-body">
         <div class="matrix-readout" aria-hidden="true">
-          ${matrixRows(7).map((row) => `<span>${row}</span>`).join("")}
+          ${matrixRows(8, 112).map((row) => `<span>${row}</span>`).join("")}
         </div>
         <div class="screen-message">
           <h2>MAGI 正在分析<span class="terminal-cursor"></span></h2>
@@ -129,15 +168,39 @@ function renderLoadingDecision() {
   `;
 }
 
+function currentMemberProgress(member, now = performance.now()) {
+  if (member.finishStart) {
+    const elapsed = now - member.finishStart;
+    const ratio = Math.min(1, elapsed / Math.max(1, member.finishDuration));
+    const value = member.finishFrom + (100 - member.finishFrom) * ratio;
+    member.progress = Math.max(member.progress || 0, Math.round(value));
+    return member.progress;
+  }
+  const elapsed = now - state.loadingStartedAt;
+  const value = Math.min(96, Math.max(1, (elapsed / Math.max(1, member.duration)) * 96));
+  member.progress = Math.max(member.progress || 0, Math.round(value));
+  return member.progress;
+}
+
+function memberOutput(result, name) {
+  const member = (result.members || []).find((item) => item.name === name) || {};
+  return [
+    member.detailed_analysis,
+    member.thesis,
+    normalizeItems(member.main_conclusions || member.key_evidence).join(" "),
+    member.decision_label
+  ].filter(Boolean).join(" ");
+}
+
 function loadingModels() {
   const members = state.config?.council?.members || [];
   const names = members.map((member) => member.name).filter(Boolean).slice(0, 4);
   return names.length ? names : defaultLoadingModels;
 }
 
-function matrixRows(count) {
+function matrixRows(count, length = 42) {
   return Array.from({ length: count }, (_, rowIndex) => {
-    return Array.from({ length: 42 }, (_, index) => {
+    return Array.from({ length }, (_, index) => {
       const cursor = (state.loadingTick * 7 + rowIndex * 11 + index * 5) % glyphSet.length;
       return glyphSet[cursor];
     }).join("");
