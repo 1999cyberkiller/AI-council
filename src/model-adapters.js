@@ -211,19 +211,24 @@ async function fetchWithTimeout(url, options = {}) {
 function demoResponse({ provider, model, system, user }) {
   if (system.includes("最终备忘录整理员")) {
     return JSON.stringify({
-      final_decision: "分歧",
+      final_decision: "反对",
+      analysis_summary: "四模型均完成独立判断。当前演示环境显示流程可用，但真实投资结论仍需接入完整实时数据和用户画像。",
+      shared_views: [
+        "需要把行情、财报和外部研究证据放在同一框架内核验。",
+        "不能只依据单一模型或单一数据源做决定。"
+      ],
       disagreements: [
         "四个模型对证据强度和执行时点的权重不同。",
         "部分模型更重视估值和回撤，部分模型更重视趋势和政策窗口。"
       ],
-      consensus: [
-        "需要把实时行情、财报质量和外部研究证据放在同一框架内核验。",
-        "不能只依据单一模型或单一数据源做决定。"
-      ],
-      recommendation: [
+      operation_suggestions: [
         "先补齐关键证据，再决定是否执行。",
         "如果执行，应采用分阶段方式，并设置明确的风险触发条件。"
-      ]
+      ],
+      investment_advice: "用户画像和实时证据不完整时，投资意向应收敛为反对或观察。",
+      speculative_intent: "反对",
+      investment_intent: "反对",
+      risk_constraints: ["演示模式不应直接形成真实操作建议。"]
     });
   }
 
@@ -232,11 +237,11 @@ function demoResponse({ provider, model, system, user }) {
   const stanceMap = {
     openai: "agree",
     deepseek: "agree",
-    anthropic: "divided",
+    anthropic: "disagree",
     google: "disagree",
-    xai: "divided",
-    nvidia: "divided",
-    minimax: "divided",
+    xai: "agree",
+    nvidia: "disagree",
+    minimax: "agree",
     "custom-openai": "agree"
   };
   const directionMap = {
@@ -249,17 +254,22 @@ function demoResponse({ provider, model, system, user }) {
     minimax: "跨证据整合后有条件执行"
   };
 
-  const stance = stanceMap[provider] || "divided";
-  const probability = stance === "agree" ? 0.64 : stance === "disagree" ? 0.38 : 0.53;
-  const decisionLabel = stance === "agree" ? "同意" : stance === "disagree" ? "不同意" : "分歧";
+  const stance = stanceMap[provider] || "disagree";
+  const probability = stance === "agree" ? 0.64 : 0.38;
+  const decisionLabel = stance === "agree" ? "同意" : "不同意";
+  const score = stance === "agree" ? 66 : 42;
 
   return JSON.stringify({
     stance,
     decision_label: decisionLabel,
+    direction: stance === "agree" ? "bullish" : "bearish",
     probability,
-    direction: directionMap[provider] || "中性",
-    confidence: providerConfigured(provider) ? 0.6 : 0.32,
-    time_horizon: "3 至 12 个月",
+    confidence: providerConfigured(provider) ? 60 : 32,
+    score,
+    time_horizon: "medium_term",
+    investment_type: "allocation",
+    suggested_action: stance === "agree" ? "watch" : "analysis_only",
+    suggested_position_sizing: "watch_only",
     detailed_analysis: `${role}对“${question}”的演示判断：该决策取决于估值水平、流动性环境、盈利预期修正和下行不对称风险。当前尚未配置 API key，因此只能展示 MAGI SYSTEM 的分析结构。真实模型接入后，本段会变成该模型在 500 字以内的完整分析摘要。`,
     main_conclusions: [
       "当前尚未配置 API key，因此返回演示分析。",
@@ -267,6 +277,21 @@ function demoResponse({ provider, model, system, user }) {
       "MAGI SYSTEM 的并行分析、投票和综合流程已生效。"
     ],
     thesis: `${role}对“${question}”的演示判断：该决策取决于估值水平、流动性环境、盈利预期修正和下行不对称风险。`,
+    core_evidence: [
+      "当前尚未配置 API key，因此返回演示分析。",
+      "MAGI SYSTEM 的并行分析、投票和综合流程已生效。"
+    ],
+    opposing_evidence: [
+      "演示分析不能替代真实行情和财报证据。",
+      "用户画像缺失时不应直接给出强操作建议。"
+    ],
+    key_variables: [
+      "估值是否被盈利修正支撑。",
+      "流动性和风险偏好是否继续改善。"
+    ],
+    invalidation_conditions: [
+      "财报质量低于预期或价格跌破关键风险边界。"
+    ],
     key_evidence: [
       "当前尚未配置 API key，因此返回演示分析。",
       "在 .env 中填入模型配置后，可切换为真实模型分析。",
@@ -280,6 +305,10 @@ function demoResponse({ provider, model, system, user }) {
     risks: [
       "多模型共识可能过度依赖同一组公开信息。",
       "当前 MVP 的市场数据工具仍为本地规则，需要接入实时数据源后才能提高证据质量。"
+    ],
+    risk_notes: [
+      "用户画像不完整时，最终建议应保持观察或分析。",
+      "真实仓位建议需要最大回撤、已有持仓和流动性约束。"
     ],
     what_would_change_my_mind: [
       "财报显示收入增速或利润率显著偏离预期。",

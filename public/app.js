@@ -8,8 +8,14 @@ const state = {
   loadingMembers: []
 };
 
-const glyphSet = "01MAGI$#<>[]{}+-=/\\AXIOMRISKCNUS";
 const defaultLoadingModels = ["DeepSeek", "Gemini", "Grok", "MINIMAX 2.7"];
+const defaultLoadingThoughts = [
+  "DeepSeek 正在审查回撤、仓位和尾部风险",
+  "Gemini 正在核对盈利质量、现金流和估值锚",
+  "Grok 正在扫描趋势结构、波动率和拥挤交易",
+  "MINIMAX 2.7 正在判断宏观周期、政策窗口和流动性",
+  "MAGI 正在压缩相同观点、模型分歧和少数派信号"
+];
 
 const briefForm = document.querySelector("#briefForm");
 const questionEl = document.querySelector("#question");
@@ -117,8 +123,14 @@ function completeLoadingSequence(result) {
       renderLoadingDecision();
       if (state.loadingMembers.every((member) => currentMemberProgress(member) >= 100)) {
         window.clearInterval(finishTimer);
-        stopLoadingSequence();
-        resolve();
+        state.loadingMembers.forEach((member) => {
+          member.progress = 100;
+        });
+        renderLoadingDecision();
+        window.setTimeout(() => {
+          stopLoadingSequence();
+          resolve();
+        }, state.config?.uiPolicy?.finalHoldMs || 520);
       }
     }, 120);
   });
@@ -149,7 +161,7 @@ function renderLoadingDecision() {
       </div>
       <div class="screen-body">
         <div class="matrix-readout" aria-hidden="true">
-          ${matrixRows(8, 112).map((row) => `<span>${row}</span>`).join("")}
+          ${thoughtRows(8).map((row) => `<span>${row}</span>`).join("")}
         </div>
         <div class="screen-message">
           <h2>分析中<span class="loading-dots" aria-hidden="true"><i></i><i></i><i></i></span></h2>
@@ -177,7 +189,8 @@ function currentMemberProgress(member, now = performance.now()) {
     return member.progress;
   }
   const elapsed = now - state.loadingStartedAt;
-  const value = Math.min(96, Math.max(1, (elapsed / Math.max(1, member.duration)) * 96));
+  const cap = state.config?.uiPolicy?.maxMemberProgressBeforeSynthesis || 96;
+  const value = Math.min(cap, Math.max(1, (elapsed / Math.max(1, member.duration)) * cap));
   member.progress = Math.max(member.progress || 0, Math.round(value));
   return member.progress;
 }
@@ -198,12 +211,14 @@ function loadingModels() {
   return names.length ? names : defaultLoadingModels;
 }
 
-function matrixRows(count, length = 42) {
+function thoughtRows(count) {
+  const thoughts = state.config?.uiPolicy?.loadingThoughts || defaultLoadingThoughts;
   return Array.from({ length: count }, (_, rowIndex) => {
-    return Array.from({ length }, (_, index) => {
-      const cursor = (state.loadingTick * 7 + rowIndex * 11 + index * 5) % glyphSet.length;
+    const phrase = thoughts[(state.loadingTick + rowIndex) % thoughts.length];
+    const decorated = `0${rowIndex + 1} ${phrase} / ${thoughts[(state.loadingTick + rowIndex + 2) % thoughts.length]}`;
+    return Array.from(decorated, (char, index) => {
       const delay = ((rowIndex * 5 + index) % 18) * 0.055;
-      return `<b style="animation-delay: ${delay.toFixed(3)}s">${glyphSet[cursor]}</b>`;
+      return `<b style="animation-delay: ${delay.toFixed(3)}s">${escapeHtml(char)}</b>`;
     }).join("");
   });
 }
@@ -237,22 +252,42 @@ function renderConfig() {
 
 function renderResult(result) {
   renderDecision(result.decision, result.aggregate);
-  membersEl.innerHTML = "";
-  toolEvidence.innerHTML = "";
+  renderMembers(result.members || []);
+  renderToolEvidence(result.tools || []);
 }
 
 function renderDecision(decision, aggregate) {
   const votes = aggregate?.vote_counts || {};
   const agreeVotes = Number(votes.agree || 0);
   const disagreeVotes = Number(votes.disagree || 0);
-  const finalDecision = agreeVotes >= disagreeVotes ? "赞同" : "反对";
+  const finalDecision = safeFinalDecision(decision.final_decision || (agreeVotes >= disagreeVotes ? "赞同" : "反对"));
 
   decisionPanel.innerHTML = `
-    <div class="memo-primary vote-result">
+    <div class="memo-primary committee-memo">
       <p class="section-kicker">Decision Memo</p>
       <div class="memo-final">
         <span>投票结果</span>
         <h2>${safeText(finalDecision)}</h2>
+      </div>
+      <p class="lead"><strong>${safeText(decision.analysis_summary || "四模型已完成独立分析，并收敛为委员会投票。")}</strong></p>
+      <div class="memo-secondary">
+        ${featuredBlock("相同观点", decision.shared_views || decision.consensus)}
+        ${featuredBlock("模型分歧", decision.disagreements)}
+        ${featuredBlock("操作建议", decision.operation_suggestions || decision.recommendation)}
+      </div>
+      <div class="intent-grid">
+        <article>
+          <span>投资建议</span>
+          <strong>${safeText(decision.investment_advice || "证据补齐前保持观察。")}</strong>
+        </article>
+        <article>
+          <span>投机意向</span>
+          <strong>${safeText(safeFinalDecision(decision.speculative_intent || finalDecision))}</strong>
+        </article>
+        <article>
+          <span>投资意向</span>
+          <strong>${safeText(safeFinalDecision(decision.investment_intent || finalDecision))}</strong>
+        </article>
       </div>
       <div class="vote-counts">
         <article>
@@ -473,12 +508,19 @@ function formatNumber(value) {
 function formatStance(value) {
   const map = {
     agree: "赞同",
-    disagree: "不赞同",
-    divided: "分歧",
-    agree_with_conditions: "分歧",
-    abstain: "分歧"
+    disagree: "反对",
+    divided: "反对",
+    agree_with_conditions: "反对",
+    abstain: "反对"
   };
   return map[value] || value || "未定";
+}
+
+function safeFinalDecision(value) {
+  const text = String(value || "").trim();
+  if (["赞同", "同意", "agree"].includes(text)) return "赞同";
+  if (["反对", "不赞同", "不同意", "disagree"].includes(text)) return "反对";
+  return text || "反对";
 }
 
 function percent(value) {

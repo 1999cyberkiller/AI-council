@@ -1,10 +1,12 @@
+import { committeeMembers } from "./committee-policy.js";
+
 export function getDefaultCouncil() {
   return {
     members: [
       {
         id: "deepseek",
         name: "DeepSeek",
-        role: "因子归因、VaR、尾部场景、仓位约束、止损条件",
+        role: committeeMembers.deepseek.displayRole,
         provider: "deepseek",
         model: process.env.DEEPSEEK_MODEL || "deepseek-chat",
         avatarUrl: "https://www.deepseek.com/favicon.ico",
@@ -13,7 +15,7 @@ export function getDefaultCouncil() {
       {
         id: "risk",
         name: "Gemini",
-        role: "商业质量、财务质量、估值锚定、技术结构验证",
+        role: committeeMembers.gemini.displayRole,
         provider: "google",
         model: process.env.GOOGLE_MODEL || "gemini-3.1-flash-lite-preview",
         avatarUrl: "https://www.google.com/s2/favicons?domain=gemini.google.com&sz=128",
@@ -22,7 +24,7 @@ export function getDefaultCouncil() {
       {
         id: "contrarian",
         name: "Grok",
-        role: "共识叙事、拥挤交易、隐含假设、可证伪反向观点",
+        role: committeeMembers.grok.displayRole,
         provider: "xai",
         model: process.env.XAI_MODEL || "grok-4-fast-non-reasoning",
         avatarUrl: "https://www.google.com/s2/favicons?domain=grok.com&sz=128",
@@ -31,7 +33,7 @@ export function getDefaultCouncil() {
       {
         id: "minimax",
         name: "MINIMAX 2.7",
-        role: "全球周期、中国政策、资产传导、事件窗口、跨证据整合",
+        role: committeeMembers.minimax.displayRole,
         provider: "minimax",
         model: process.env.MINIMAX_MODEL || "minimaxai/minimax-m2.7",
         avatarUrl: "https://www.minimaxi.com/favicon.ico",

@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { analyzeWithCouncil } from "./council-engine.js";
+import { committeePolicy, uiPolicy } from "./committee-policy.js";
 import { publicCouncilConfig } from "./council-config.js";
 import { loadEnv } from "./env.js";
 import { tools } from "./finance-tools.js";
@@ -34,7 +35,9 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "GET" && url.pathname === "/api/config") {
       return sendJson(res, {
         council: publicCouncilConfig(),
-        tools
+        tools,
+        committeePolicy,
+        uiPolicy
       });
     }
 

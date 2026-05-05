@@ -1,42 +1,13 @@
 import { getDefaultCouncil } from "./council-config.js";
+import {
+  binaryVoteFromAction,
+  buildMemberSystemPrompt,
+  buildSynthesisSystemPrompt,
+  committeePolicy,
+  getCommitteeMemberPolicy
+} from "./committee-policy.js";
 import { runFinanceTools } from "./finance-tools.js";
 import { askModel } from "./model-adapters.js";
-
-const memberSystem = `你是 MAGI SYSTEM 的一名独立分析模型。
-角色：{{ROLE}}
-
-产品原则：
-- 你看不到其他议员的输出，必须独立判断，避免锚定。
-- 方差是信号。不要为了显得稳妥而调和分歧。
-- 所有判断必须可证伪。必须说明核心证据、关键风险和结论边界。
-- 不输出投资建议指令，只输出决策辅助信息。
-- 如果用户问题可以用“是/否”回答，你必须直接选择 agree 或 disagree。不要返回 agree_with_conditions。
-- detailed_analysis 必须是完整分析摘要，少于 500 个中文字符，不输出隐藏思维链。
-
-表达必须使用专业中文，必要时保留 English 专业术语。不要写寒暄。
-只返回符合以下结构的 JSON：
-{
-  "stance": "agree | disagree | divided",
-  "decision_label": "同意 | 不同意 | 分歧",
-  "time_horizon": "判断期限",
-  "detailed_analysis": "少于 500 个中文字符的完整分析摘要",
-  "main_conclusions": ["主要结论，最多 4 条"],
-  "key_evidence": ["核心依据"],
-  "risks": ["主要风险"],
-  "next_checks": ["后续核验"],
-  "minority_signal": "如果你的观点可能是少数派，说明它为什么值得保留",
-  "model": "模型名称"
-}`;
-
-const synthesisSystem = `你是 MAGI SYSTEM 的最终备忘录整理员，由 DeepSeek 执行。
-你的任务只是在四个模型输出之间做中立总结，不允许偏袒 DeepSeek 自己的分析，不允许扩大或改写任何模型未表达的观点。
-你必须输出专业中文，只返回 JSON：
-{
-  "final_decision": "赞同 | 不赞同 | 分歧",
-  "disagreements": ["四模型的关键分歧，最多 4 条"],
-  "consensus": ["四模型的共同判断，最多 4 条"],
-  "recommendation": ["基于分歧和共识给出的操作建议，最多 4 条"]
-}`;
 
 export async function analyzeWithCouncil({ question, context = "", selectedMembers = [] }) {
   const council = getDefaultCouncil();
@@ -60,7 +31,7 @@ export async function analyzeWithCouncil({ question, context = "", selectedMembe
         const raw = await askModel({
           provider: member.provider,
           model: member.model,
-          system: memberSystem.replace("{{ROLE}}", `${member.name}: ${member.role}`),
+          system: buildMemberSystemPrompt(member),
           user: buildMemberPrompt({ question, context, toolText, member })
         });
 
@@ -84,18 +55,25 @@ export async function analyzeWithCouncil({ question, context = "", selectedMembe
           elapsed_ms: Date.now() - startedAt,
           ok: false,
           tools_used: summarizeTools(visibleToolOutputs),
-          stance: "divided",
-          decision_label: "分歧",
+          stance: "disagree",
+          decision_label: "不同意",
           probability: 0.5,
           confidence: 0,
           direction: "无法形成判断",
+          score: 0,
+          suggested_action: "analysis_only",
+          suggested_position_sizing: "none",
           detailed_analysis: limitText(error.message, 500),
           thesis: limitText(error.message, 500),
           main_conclusions: ["模型调用失败。"],
           key_evidence: [],
+          core_evidence: [],
+          opposing_evidence: [],
           key_assumptions: [],
           risks: ["模型调用失败。"],
+          risk_notes: ["模型调用失败。"],
           what_would_change_my_mind: [],
+          invalidation_conditions: ["模型恢复前不应依赖该席位结论。"],
           next_checks: ["检查 provider API key、模型名称和网络连接。"]
         };
       }
@@ -150,7 +128,8 @@ ${member.name}
 工具权限：
 ${(member.allowedTools || []).join(", ") || "无"}
 
-请给出独立判断。你只能使用上方列出的工具输出。不要复述工具输出，只在有价值时引用。`;
+请给出独立判断。你只能使用上方列出的工具输出。不要复述工具输出，只在有价值时引用。
+最终必须投 agree 或 disagree。即使建议 watch 或 analysis_only，也要把票映射成 agree 或 disagree。`;
 }
 
 function memberToolOutputs(member, toolOutputs) {
@@ -183,22 +162,33 @@ function parseModelJson(raw) {
 }
 
 function normalizeVote(parsed, fallbackModel) {
-  const stance = normalizeStance(parsed.stance);
+  const confidenceScore = normalizePercentNumber(parsed.confidence, 50);
+  const score = clampNumber(parsed.score, 0, 100, confidenceScore);
+  const stance = normalizeStance(parsed.stance, parsed.suggested_action, score, parsed.direction);
   const analysis = limitText(parsed.detailed_analysis || parsed.thesis || "模型未返回分析。", 500);
   return {
     stance,
     decision_label: normalizeDecisionLabel(parsed.decision_label, stance),
     probability: stanceProbability(stance),
     direction: String(parsed.direction || "中性"),
-    confidence: 0.5,
+    confidence: confidenceScore / 100,
+    score,
     time_horizon: String(parsed.time_horizon || "未说明"),
+    investment_type: String(parsed.investment_type || parsed.investmentType || "allocation"),
+    suggested_action: String(parsed.suggested_action || parsed.suggestedAction || "watch"),
+    suggested_position_sizing: String(parsed.suggested_position_sizing || parsed.suggestedPositionSizing || "watch_only"),
     detailed_analysis: analysis,
     thesis: analysis,
     main_conclusions: normalizeList(parsed.main_conclusions || parsed.key_evidence).slice(0, 4),
     key_evidence: normalizeList(parsed.key_evidence),
+    core_evidence: normalizeList(parsed.core_evidence || parsed.coreEvidence || parsed.key_evidence).slice(0, 3),
+    opposing_evidence: normalizeList(parsed.opposing_evidence || parsed.opposingEvidence).slice(0, 3),
+    key_variables: normalizeList(parsed.key_variables || parsed.keyVariables).slice(0, 4),
     key_assumptions: [],
-    risks: normalizeList(parsed.risks),
+    risks: normalizeList(parsed.risks || parsed.risk_notes || parsed.riskNotes),
+    risk_notes: normalizeList(parsed.risk_notes || parsed.riskNotes || parsed.risks),
     what_would_change_my_mind: [],
+    invalidation_conditions: normalizeList(parsed.invalidation_conditions || parsed.invalidationConditions).slice(0, 4),
     next_checks: normalizeList(parsed.next_checks),
     minority_signal: String(parsed.minority_signal || ""),
     returned_model: String(parsed.model || fallbackModel || "")
@@ -208,14 +198,17 @@ function normalizeVote(parsed, fallbackModel) {
 function aggregateVotes(results) {
   const valid = results.filter((result) => result.ok);
   const pool = valid.length ? valid : results;
-  const weights = pool.map((result) => Math.max(0.1, result.confidence || 0.1));
+  const weights = pool.map((result) => committeePolicy.weights[result.id] || Math.max(0.1, result.confidence || 0.1));
   const totalWeight = weights.reduce((sum, value) => sum + value, 0) || 1;
   const weightedProbability = pool.reduce(
     (sum, result, index) => sum + result.probability * weights[index],
     0
   ) / totalWeight;
 
-  const counts = countBy(pool.map((result) => result.stance));
+  const counts = {
+    agree: pool.filter((result) => result.stance === "agree").length,
+    disagree: pool.filter((result) => result.stance === "disagree").length
+  };
   const decision = chooseDecision(counts, weightedProbability);
   const confidence = Math.min(
     0.95,
@@ -228,12 +221,13 @@ function aggregateVotes(results) {
     confidence: Number(confidence.toFixed(2)),
     vote_counts: counts,
     direction: probabilityDirection(weightedProbability),
-    summary: `${counts.agree || 0} 票赞同，${counts.disagree || 0} 票不赞同，${counts.divided || 0} 票分歧`
+    total_votes: pool.length,
+    summary: `${counts.agree || 0} 票赞同，${counts.disagree || 0} 票反对`
   };
 }
 
 async function synthesizeDecision({ results, aggregate, question, context }) {
-  const fallback = fallbackDecision(results, aggregate);
+  const fallback = fallbackDecision(results, aggregate, context);
   const deepseek = getDefaultCouncil().members.find((member) => member.id === "deepseek");
   if (!deepseek) return fallback;
 
@@ -241,20 +235,36 @@ async function synthesizeDecision({ results, aggregate, question, context }) {
     const raw = await askModel({
       provider: deepseek.provider,
       model: deepseek.model,
-      system: synthesisSystem,
+      system: buildSynthesisSystemPrompt(),
       user: buildSynthesisPrompt({ question, context, results, aggregate }),
       temperature: 0.1
     });
     const parsed = parseModelJson(raw);
+    const fallbackDecisionLabel = normalizeFinalDecision(aggregate.decision);
+    const finalDecision = fallback.risk_officer_veto
+      ? "反对"
+      : normalizeFinalDecision(parsed.final_decision, fallbackDecisionLabel);
     const disagreements = normalizeList(parsed.disagreements).slice(0, 4);
-    const consensus = normalizeList(parsed.consensus).slice(0, 4);
-    const recommendation = normalizeList(parsed.recommendation).slice(0, 4);
+    const sharedViews = normalizeList(parsed.shared_views || parsed.consensus).slice(0, 4);
+    const operationSuggestions = normalizeList(parsed.operation_suggestions || parsed.recommendation).slice(0, 4);
     return {
       ...fallback,
-      final_decision: normalizeFinalDecision(parsed.final_decision, fallback.final_decision),
+      final_decision: finalDecision,
+      analysis_summary: limitText(parsed.analysis_summary || fallback.analysis_summary, 220),
       disagreements: disagreements.length ? disagreements : fallback.disagreements,
-      consensus: consensus.length ? consensus : fallback.consensus,
-      recommendation: recommendation.length ? recommendation : fallback.recommendation
+      shared_views: sharedViews.length ? sharedViews : fallback.shared_views,
+      consensus: sharedViews.length ? sharedViews : fallback.shared_views,
+      operation_suggestions: operationSuggestions.length ? operationSuggestions : fallback.operation_suggestions,
+      recommendation: operationSuggestions.length ? operationSuggestions : fallback.operation_suggestions,
+      investment_advice: limitText(parsed.investment_advice || fallback.investment_advice, 160),
+      speculative_intent: fallback.risk_officer_veto
+        ? "反对"
+        : normalizeFinalDecision(parsed.speculative_intent, fallback.speculative_intent),
+      investment_intent: fallback.risk_officer_veto
+        ? "反对"
+        : normalizeFinalDecision(parsed.investment_intent, fallback.investment_intent),
+      risk_constraints: normalizeList(parsed.risk_constraints || fallback.risk_constraints).slice(0, 3),
+      vote_summary: aggregate.summary
     };
   } catch {
     return fallback;
@@ -265,9 +275,16 @@ function buildSynthesisPrompt({ question, context, results, aggregate }) {
   const compactResults = results.map((result) => ({
     name: result.name,
     decision_label: result.decision_label,
+    stance: result.stance,
+    score: result.score,
     detailed_analysis: result.detailed_analysis,
     main_conclusions: result.main_conclusions,
+    core_evidence: result.core_evidence,
+    opposing_evidence: result.opposing_evidence,
+    invalidation_conditions: result.invalidation_conditions,
     risks: result.risks,
+    suggested_action: result.suggested_action,
+    suggested_position_sizing: result.suggested_position_sizing,
     minority_signal: result.minority_signal
   }));
   return `问题：
@@ -285,20 +302,39 @@ ${JSON.stringify(aggregate, null, 2)}
 请只做中立总结。DeepSeek 不能偏袒自己的上文。`;
 }
 
-function fallbackDecision(results, aggregate) {
+function fallbackDecision(results, aggregate, context = "") {
+  const risk = results.find((result) => result.id === "deepseek");
+  const profileIncomplete = !String(context || "").trim();
+  const riskVeto = Boolean((risk && (risk.score < 50 || risk.stance === "disagree")) || profileIncomplete);
+  const finalDecision = riskVeto ? "反对" : normalizeFinalDecision(aggregate.decision);
+  const riskConstraints = [
+    profileIncomplete ? "用户画像不完整，最终建议只能保持观察或分析。" : "",
+    riskVeto ? "Risk Officer 触发风控约束，最终建议必须降级。" : "",
+    ...extractRisks(results)
+  ].filter(Boolean).slice(0, 3);
+
   return {
     decision: aggregate.decision,
-    final_decision: normalizeFinalDecision(aggregate.decision),
+    final_decision: finalDecision,
     direction: aggregate.direction,
     vote_summary: aggregate.summary,
-    rationale: "MAGI SYSTEM 根据四个模型的并行输出完成加权综合，并保留共识、分歧和少数派信号。",
+    analysis_summary: "MAGI SYSTEM 已完成四模型独立分析，并将共识、分歧、操作建议和二元投票收敛为委员会结果。",
+    shared_views: extractConsensus(results),
     consensus: extractConsensus(results),
     disagreements: extractDisagreements(results),
-    recommendation: aggregate.decision === "agree"
-      ? ["可以推进，但必须先确认风险边界和执行节奏。"]
-      : aggregate.decision === "disagree"
-        ? ["证据补齐前，不宜扩大风险暴露。"]
-        : ["先处理分歧项，再决定是否执行。"],
+    operation_suggestions: aggregate.decision === "agree" && !riskVeto
+      ? ["可以继续研究或小规模试探，但必须先确认仓位、止损和复核条件。"]
+      : ["证据补齐前，不宜扩大风险暴露。"],
+    recommendation: aggregate.decision === "agree" && !riskVeto
+      ? ["可以继续研究或小规模试探，但必须先确认仓位、止损和复核条件。"]
+      : ["证据补齐前，不宜扩大风险暴露。"],
+    investment_advice: riskVeto
+      ? "风控约束未解除前，投资意向应收敛为反对或观察。"
+      : "若用户画像、估值和风险预算均可接受，可进入下一轮复核。",
+    speculative_intent: aggregate.decision === "agree" && !riskVeto ? "赞同" : "反对",
+    investment_intent: aggregate.decision === "agree" && !riskVeto ? "赞同" : "反对",
+    risk_constraints: riskConstraints,
+    risk_officer_veto: riskVeto,
     decision_guide: "把共识当作基准情景，把分歧当作下单前的核验清单。"
   };
 }
@@ -317,35 +353,44 @@ function extractDisagreements(results) {
     .slice(0, 4);
 }
 
-function normalizeStance(stance) {
+function extractRisks(results) {
+  return results
+    .flatMap((result) => result.risk_notes || result.risks || [])
+    .filter(Boolean)
+    .slice(0, 4);
+}
+
+function normalizeStance(stance, action, score, direction) {
   const value = String(stance || "").toLowerCase().replace(/\s+/g, "_");
-  if (["agree", "disagree", "divided", "agree_with_conditions", "abstain"].includes(value)) {
-    if (value === "agree_with_conditions" || value === "abstain") return "divided";
+  if (["agree", "disagree"].includes(value)) {
     return value;
   }
+  if (["divided", "agree_with_conditions", "abstain", "neutral"].includes(value)) return binaryVoteFromAction(action, score);
   if (["strong_bullish", "bullish"].includes(value)) return "agree";
-  if (value === "neutral") return "divided";
   if (["bearish", "strong_bearish"].includes(value)) return "disagree";
-  return "divided";
+  const directionValue = String(direction || "").toLowerCase();
+  if (directionValue.includes("bull")) return "agree";
+  if (directionValue.includes("bear")) return "disagree";
+  return binaryVoteFromAction(action, score);
 }
 
 function normalizeDecisionLabel(value, stance) {
   const text = String(value || "").trim();
-  if (["同意", "不同意", "分歧"].includes(text)) return text;
+  if (["同意", "赞同"].includes(text)) return "同意";
+  if (["不同意", "不赞同", "反对"].includes(text)) return "不同意";
   if (stance === "agree") return "同意";
-  if (stance === "disagree") return "不同意";
-  return "分歧";
+  return "不同意";
 }
 
-function normalizeFinalDecision(value, fallback = "分歧") {
+function normalizeFinalDecision(value, fallback = "反对") {
   const text = String(value || "").trim();
-  if (["赞同", "不赞同", "分歧"].includes(text)) return text;
+  if (["赞同", "反对"].includes(text)) return text;
+  if (text === "不赞同") return "反对";
   if (value === "agree") return "赞同";
-  if (value === "disagree") return "不赞同";
-  if (["赞同", "不赞同", "分歧"].includes(fallback)) return fallback;
+  if (value === "disagree") return "反对";
+  if (["赞同", "反对"].includes(fallback)) return fallback;
   if (fallback === "agree") return "赞同";
-  if (fallback === "disagree") return "不赞同";
-  return "分歧";
+  return "反对";
 }
 
 function limitText(value, maxLength) {
@@ -358,6 +403,19 @@ function normalizeList(value) {
   if (Array.isArray(value)) return value.map((item) => String(item)).filter(Boolean).slice(0, 8);
   if (!value) return [];
   return [String(value)];
+}
+
+function clampNumber(value, min, max, fallback) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.min(max, Math.max(min, number));
+}
+
+function normalizePercentNumber(value, fallback) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  if (number > 0 && number <= 1) return Math.round(number * 100);
+  return clampNumber(number, 0, 100, fallback);
 }
 
 function stanceProbability(stance) {
@@ -383,7 +441,7 @@ function chooseDecision(counts, probability) {
   }
   if (probability >= 0.62 && (counts.agree || 0) >= (counts.disagree || 0)) return "agree";
   if (probability <= 0.42) return "disagree";
-  return "divided";
+  return (counts.agree || 0) >= (counts.disagree || 0) ? "agree" : "disagree";
 }
 
 function probabilityDirection(probability) {
