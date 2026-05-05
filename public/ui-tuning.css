@@ -1,0 +1,153 @@
+:root {
+  --control-radius: 28px;
+}
+
+.prompt-box,
+.decision-board,
+.terminal-screen {
+  border-radius: var(--control-radius);
+}
+
+.terminal-screen::before {
+  animation-duration: 2.5s;
+}
+
+.matrix-readout b {
+  animation-duration: 2.5s;
+}
+
+.screen-message {
+  justify-items: center;
+  text-align: center;
+}
+
+.screen-message h2 {
+  font-size: 0;
+}
+
+.screen-message h2::before {
+  content: "MAGI 正在分析";
+  color: var(--ivory);
+  font-family: var(--serif);
+  font-size: clamp(24px, 3.2vw, 38px);
+  line-height: 1.16;
+}
+
+.screen-message .loading-dots {
+  font-size: initial;
+}
+
+.loading-dots i {
+  animation-duration: 2.5s;
+}
+
+.model-load-row,
+.total-load {
+  grid-template-columns: minmax(98px, 0.22fr) minmax(240px, 2fr) 44px;
+}
+
+.committee-memo {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.committee-memo > .section-kicker,
+.committee-memo > .lead,
+.committee-memo > .memo-secondary,
+.committee-memo > .intent-grid {
+  grid-column: 1 / -1;
+}
+
+.committee-memo > .memo-final {
+  grid-column: 1;
+  grid-row: 2;
+  align-self: center;
+}
+
+.committee-memo > .vote-counts {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: center;
+  justify-self: end;
+}
+
+.vote-summary-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: center;
+}
+
+.vote-summary-row .vote-counts,
+.vote-counts {
+  grid-template-columns: repeat(2, minmax(0, 116px));
+  justify-content: end;
+  align-items: center;
+}
+
+@keyframes glyphJump {
+  0%,
+  100% {
+    opacity: 0.42;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 0.94;
+    transform: translateY(-5px);
+  }
+  50% {
+    opacity: 0.62;
+    transform: translateY(1px);
+  }
+  80%,
+  100% {
+    opacity: 0.42;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dotJump {
+  0%,
+  100% {
+    opacity: 0.42;
+    transform: translateY(0) scale(0.92);
+  }
+  32% {
+    opacity: 1;
+    transform: translateY(-5px) scale(1);
+  }
+  52% {
+    opacity: 0.62;
+    transform: translateY(1px) scale(0.96);
+  }
+  80%,
+  100% {
+    opacity: 0.42;
+    transform: translateY(0) scale(0.92);
+  }
+}
+
+@media (max-width: 840px) {
+  .model-load-row,
+  .total-load {
+    grid-template-columns: 1fr 44px;
+  }
+}
+
+@media (max-width: 620px) {
+  .committee-memo,
+  .vote-summary-row {
+    grid-template-columns: 1fr;
+  }
+
+  .committee-memo > .memo-final,
+  .committee-memo > .vote-counts {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .vote-summary-row .vote-counts,
+  .vote-counts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: stretch;
+  }
+}
