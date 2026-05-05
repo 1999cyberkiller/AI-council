@@ -175,7 +175,8 @@ export const uiPolicy = {
     "Risk Officer 正在检查是否触发风控约束",
     "Committee 正在把投资意向和投机意向收敛成二元投票"
   ],
-  loadingLoopSeconds: 1.5,
+  loadingLoopSeconds: 2,
+  loadingPauseSeconds: 0.5,
   maxMemberProgressBeforeSynthesis: 96,
   finalHoldMs: 520
 };
