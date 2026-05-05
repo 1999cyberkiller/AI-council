@@ -196,8 +196,10 @@ function normalizeVote(parsed, fallbackModel) {
 }
 
 function aggregateVotes(results) {
-  const valid = results.filter((result) => result.ok);
-  const pool = valid.length ? valid : results;
+  const pool = results.map((result) => ({
+    ...result,
+    stance: normalizeStance(result.stance, result.suggested_action, result.score, result.direction)
+  }));
   const weights = pool.map((result) => committeePolicy.weights[result.id] || Math.max(0.1, result.confidence || 0.1));
   const totalWeight = weights.reduce((sum, value) => sum + value, 0) || 1;
   const weightedProbability = pool.reduce(
