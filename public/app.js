@@ -152,7 +152,7 @@ function renderLoadingDecision() {
           ${matrixRows(8, 112).map((row) => `<span>${row}</span>`).join("")}
         </div>
         <div class="screen-message">
-          <h2>MAGI 正在分析<span class="terminal-cursor"></span></h2>
+          <h2>分析中<span class="loading-dots" aria-hidden="true"><i></i><i></i><i></i></span></h2>
           <p>四个模型并行生成回答。系统正在压缩共识、分歧和少数派信号。</p>
         </div>
         <div class="model-load-list">
@@ -202,7 +202,8 @@ function matrixRows(count, length = 42) {
   return Array.from({ length: count }, (_, rowIndex) => {
     return Array.from({ length }, (_, index) => {
       const cursor = (state.loadingTick * 7 + rowIndex * 11 + index * 5) % glyphSet.length;
-      return glyphSet[cursor];
+      const delay = ((rowIndex * 5 + index) % 18) * 0.055;
+      return `<b style="animation-delay: ${delay.toFixed(3)}s">${glyphSet[cursor]}</b>`;
     }).join("");
   });
 }
@@ -502,5 +503,5 @@ function safeText(value) {
 function spaceCjkEnglish(value) {
   return String(value ?? "")
     .replace(/([\u3400-\u9fff])([A-Za-z0-9][A-Za-z0-9.+/#-]*)/g, "$1 $2")
-    .replace(/([A-Za-z0-9][A-Za-z0-9.+/#-]*)([\u3400-\u9fff])/g, "$1 $2");
+    .replace(/([A-Za-z0-9][A-Za-z0-9.+/#-]*)([\u3400-\u9fff])/g, "$1$2");
 }
