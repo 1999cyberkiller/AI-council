@@ -1,7 +1,13 @@
 const state = {
   config: null,
-  loading: false
+  loading: false,
+  loadingTimer: null,
+  loadingProgress: 0,
+  loadingTick: 0
 };
+
+const glyphSet = "01MAGI$#<>[]{}+-=/\\AXIOMRISKCNUS";
+const defaultLoadingModels = ["DeepSeek", "Gemini", "Grok", "MINIMAX 2.7"];
 
 const briefForm = document.querySelector("#briefForm");
 const questionEl = document.querySelector("#question");
@@ -28,13 +34,7 @@ async function loadConfig() {
 
 async function runCouncil() {
   setLoading(true);
-  decisionPanel.innerHTML = `
-    <div class="empty-state">
-      <p class="section-kicker">Decision Memo</p>
-      <h2>MAGI 正在分析</h2>
-      <p>四个模型并行调用中。系统会压缩共识、分歧和少数派信号。</p>
-    </div>
-  `;
+  startLoadingSequence();
   membersEl.innerHTML = "";
   toolEvidence.innerHTML = "";
 
@@ -49,8 +49,10 @@ async function runCouncil() {
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(result.error || "分析失败。");
+    stopLoadingSequence(100);
     renderResult(result);
   } catch (error) {
+    stopLoadingSequence();
     decisionPanel.innerHTML = `
       <div class="empty-state">
         <p class="section-kicker">Decision Memo</p>
@@ -61,6 +63,85 @@ async function runCouncil() {
   } finally {
     setLoading(false);
   }
+}
+
+function startLoadingSequence() {
+  stopLoadingSequence();
+  state.loadingProgress = 4;
+  state.loadingTick = 0;
+  renderLoadingDecision();
+  state.loadingTimer = window.setInterval(() => {
+    state.loadingTick += 1;
+    const remaining = 96 - state.loadingProgress;
+    const step = Math.max(0.4, remaining * 0.075);
+    state.loadingProgress = Math.min(96, state.loadingProgress + step);
+    renderLoadingDecision();
+  }, 520);
+}
+
+function stopLoadingSequence(progress) {
+  if (state.loadingTimer) window.clearInterval(state.loadingTimer);
+  state.loadingTimer = null;
+  if (Number.isFinite(progress)) {
+    state.loadingProgress = progress;
+    renderLoadingDecision();
+  }
+}
+
+function renderLoadingDecision() {
+  const total = Math.max(1, Math.round(state.loadingProgress));
+  const rows = loadingModels().map((name, index) => {
+    const offset = index * 7;
+    const value = Math.max(1, Math.min(99, total - offset + ((state.loadingTick + index) % 5)));
+    return `
+      <div class="model-load-row">
+        <span>${safeText(name)}</span>
+        <div class="model-load-track"><i style="width: ${value}%"></i></div>
+        <strong>${value}%</strong>
+      </div>
+    `;
+  }).join("");
+
+  decisionPanel.innerHTML = `
+    <div class="terminal-screen" role="status" aria-live="polite">
+      <div class="screen-header">
+        <p class="section-kicker">Decision Memo</p>
+        <span>MAGI DISPLAY ONLINE</span>
+      </div>
+      <div class="screen-body">
+        <div class="matrix-readout" aria-hidden="true">
+          ${matrixRows(7).map((row) => `<span>${row}</span>`).join("")}
+        </div>
+        <div class="screen-message">
+          <h2>MAGI 正在分析<span class="terminal-cursor"></span></h2>
+          <p>四个模型并行生成回答。系统正在压缩共识、分歧和少数派信号。</p>
+        </div>
+        <div class="model-load-list">
+          ${rows}
+        </div>
+        <div class="total-load">
+          <span>同步加载</span>
+          <div class="total-load-track"><i style="width: ${total}%"></i></div>
+          <strong>${total}%</strong>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function loadingModels() {
+  const members = state.config?.council?.members || [];
+  const names = members.map((member) => member.name).filter(Boolean).slice(0, 4);
+  return names.length ? names : defaultLoadingModels;
+}
+
+function matrixRows(count) {
+  return Array.from({ length: count }, (_, rowIndex) => {
+    return Array.from({ length: 42 }, (_, index) => {
+      const cursor = (state.loadingTick * 7 + rowIndex * 11 + index * 5) % glyphSet.length;
+      return glyphSet[cursor];
+    }).join("");
+  });
 }
 
 function renderConfig() {
