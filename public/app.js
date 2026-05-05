@@ -206,7 +206,8 @@ function matrixRows(count, length = 42) {
       return `<b style="animation-delay: ${delay.toFixed(3)}s">${glyphSet[cursor]}</b>`;
     }).join("");
   });
-}\n
+}
+
 function renderConfig() {
   const members = state.config.council.members;
   const liveCount = members.filter((member) => member.configured).length;
