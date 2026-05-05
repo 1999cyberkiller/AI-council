@@ -206,8 +206,7 @@ function matrixRows(count, length = 42) {
       return `<b style="animation-delay: ${delay.toFixed(3)}s">${glyphSet[cursor]}</b>`;
     }).join("");
   });
-}
-
+}\n
 function renderConfig() {
   const members = state.config.council.members;
   const liveCount = members.filter((member) => member.configured).length;
@@ -503,5 +502,5 @@ function safeText(value) {
 function spaceCjkEnglish(value) {
   return String(value ?? "")
     .replace(/([\u3400-\u9fff])([A-Za-z0-9][A-Za-z0-9.+/#-]*)/g, "$1 $2")
-    .replace(/([A-Za-z0-9][A-Za-z0-9.+/#-]*)([\u3400-\u9fff])/g, "$1$2");
+    .replace(/([A-Za-z0-9][A-Za-z0-9.+/#-]*)([\u3400-\u9fff])/g, "$1 $2");
 }
