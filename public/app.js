@@ -237,24 +237,33 @@ function renderConfig() {
 
 function renderResult(result) {
   renderDecision(result.decision, result.aggregate);
-  renderMembers(result.members || []);
-  renderToolEvidence(result.tools || []);
+  membersEl.innerHTML = "";
+  toolEvidence.innerHTML = "";
 }
 
 function renderDecision(decision, aggregate) {
+  const votes = aggregate?.vote_counts || {};
+  const agreeVotes = Number(votes.agree || 0);
+  const disagreeVotes = Number(votes.disagree || 0);
+  const finalDecision = agreeVotes >= disagreeVotes ? "赞同" : "反对";
+
   decisionPanel.innerHTML = `
-    <div class="memo-primary">
+    <div class="memo-primary vote-result">
       <p class="section-kicker">Decision Memo</p>
       <div class="memo-final">
-        <span>最终决策</span>
-        <h2>${safeText(decision.final_decision || formatStance(decision.decision))}</h2>
+        <span>投票结果</span>
+        <h2>${safeText(finalDecision)}</h2>
       </div>
-      <p class="lead"><strong>${safeText(decision.rationale || aggregate.summary || "")}</strong></p>
-    </div>
-    <div class="memo-secondary">
-      ${featuredBlock("分歧", decision.disagreements)}
-      ${featuredBlock("共识", decision.consensus || decision.consensus_zone)}
-      ${featuredBlock("建议", decision.recommendation || [decision.action])}
+      <div class="vote-counts">
+        <article>
+          <span>赞同</span>
+          <strong>${agreeVotes}</strong>
+        </article>
+        <article>
+          <span>反对</span>
+          <strong>${disagreeVotes}</strong>
+        </article>
+      </div>
     </div>
   `;
 }
