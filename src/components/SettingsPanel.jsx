@@ -14,6 +14,8 @@ export const SettingsPanel = ({
   onKeyChange,
   alphaKey,
   onAlphaChange,
+  finnhubKey,
+  onFinnhubChange,
   assignments,
   onAssignmentChange,
   modelVariants,
@@ -22,6 +24,11 @@ export const SettingsPanel = ({
   onRemoveModel,
   saveStatus,
   onClearStorage,
+  personaSignalsEnabled,
+  onPersonaSignalsToggle,
+  modelHealth = {},
+  modelHealthRunning = false,
+  onTestModels,
 }) => {
   useEscToClose(expanded, onToggle);
   const containerRef = useRef(null);
@@ -194,13 +201,23 @@ export const SettingsPanel = ({
             </div>
 
             {!showAddForm ? (
-              <button
-                className="btn-ghost"
-                onClick={() => setShowAddForm(true)}
-                style={{ marginTop: 4 }}
-              >
-                + 添加自定义模型 (OpenAI 兼容)
-              </button>
+              <div className="settings-actions-row">
+                <button
+                  className="btn-ghost"
+                  onClick={() => setShowAddForm(true)}
+                  style={{ marginTop: 4 }}
+                >
+                  + 添加自定义模型 (OpenAI 兼容)
+                </button>
+                <button
+                  className="btn-ghost"
+                  onClick={onTestModels}
+                  disabled={modelHealthRunning}
+                  style={{ marginTop: 4 }}
+                >
+                  {modelHealthRunning ? '测试中…' : '测试模型连接'}
+                </button>
+              </div>
             ) : (
               <div
                 style={{
@@ -249,6 +266,33 @@ export const SettingsPanel = ({
                     取消
                   </button>
                 </div>
+              </div>
+            )}
+
+            {Object.keys(modelHealth).length > 0 && (
+              <div className="model-health-grid">
+                {models.map((m) => {
+                  const h = modelHealth[m.id] || { status: 'missing', detail: '未测试' };
+                  const label = {
+                    pending: '测试中',
+                    ok: '正常',
+                    error: '失败',
+                    missing: '未配置',
+                  }[h.status] || '未测试';
+                  return (
+                    <div className={`model-health-card model-health-card--${h.status}`} key={m.id}>
+                      <div className="model-health-top">
+                        <span className="display-serif">{m.name}</span>
+                        <span className="model-health-pill">{label}</span>
+                      </div>
+                      <div className="mono model-health-detail">
+                        {h.variant ? `${h.variant} · ` : ''}
+                        {typeof h.ms === 'number' ? `${h.ms}ms · ` : ''}
+                        {h.detail}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -410,7 +454,112 @@ export const SettingsPanel = ({
                   免费申请：alphavantage.co/support/#api-key
                 </div>
               </div>
+
+              <div>
+                <label
+                  className="display-serif"
+                  style={{ fontSize: '0.95rem', fontWeight: 600, display: 'block', marginBottom: 5 }}
+                >
+                  Finnhub（美股事件）
+                  <span
+                    className="mono"
+                    style={{
+                      fontSize: '0.7rem',
+                      color: finnhubKey ? 'var(--buy)' : 'var(--ink-faded)',
+                      marginLeft: 8,
+                      letterSpacing: '0.05em',
+                    }}
+                  >
+                    · {finnhubKey ? '已配置' : '可选'}
+                  </span>
+                </label>
+                <input
+                  type="password"
+                  className="key-input"
+                  placeholder="Finnhub API Key (可选)"
+                  value={finnhubKey || ''}
+                  onChange={(e) => onFinnhubChange(e.target.value)}
+                />
+                <div
+                  className="mono"
+                  style={{ fontSize: '0.65rem', color: 'var(--ink-faded)', marginTop: 3, lineHeight: 1.4 }}
+                >
+                  免费申请：finnhub.io/register · 用于美股财报/分红日历（A 股不需要）
+                </div>
+              </div>
             </div>
+          </div>
+
+          {/* ── 高级设置 ── */}
+          <div style={{ marginTop: 28 }}>
+            <div
+              className="display-serif"
+              style={{
+                fontSize: '0.96rem',
+                fontWeight: 700,
+                color: 'var(--ink)',
+                borderBottom: '1px solid var(--ink-faded)',
+                paddingBottom: 6,
+                marginBottom: 14,
+                letterSpacing: '0.04em',
+              }}
+            >
+              高级设置
+            </div>
+
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 12,
+                padding: '12px 14px',
+                background: 'rgba(240, 232, 214, 0.4)',
+                border: '1px solid var(--ink-faded)',
+                cursor: 'pointer',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(240, 232, 214, 0.7)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(240, 232, 214, 0.4)';
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={!!personaSignalsEnabled}
+                onChange={(e) => onPersonaSignalsToggle && onPersonaSignalsToggle(e.target.checked)}
+                style={{
+                  marginTop: 3,
+                  width: 16,
+                  height: 16,
+                  cursor: 'pointer',
+                  accentColor: 'var(--accent)',
+                  flexShrink: 0,
+                }}
+              />
+              <div style={{ flex: 1 }}>
+                <div
+                  className="display-serif"
+                  style={{ fontSize: '0.92rem', fontWeight: 600, color: 'var(--ink)', marginBottom: 4 }}
+                >
+                  分析师过往表现反馈
+                </div>
+                <div
+                  className="body-serif"
+                  style={{ fontSize: '0.78rem', color: 'var(--ink-soft)', lineHeight: 1.5 }}
+                >
+                  把每位分析师此前的准确率（含本行业细分）注入到 ta 的 system prompt，让 ta 知道自己的历史表现。
+                  仅当 ta 有 ≥5 次有定论的判断时才注入。
+                </div>
+                <div
+                  className="mono"
+                  style={{ fontSize: '0.68rem', color: 'var(--ink-faded)', marginTop: 6, letterSpacing: '0.04em' }}
+                >
+                  默认开启 · 关闭后每次议会都是"白纸状态"，不受历史表现影响
+                </div>
+              </div>
+            </label>
           </div>
 
           <div

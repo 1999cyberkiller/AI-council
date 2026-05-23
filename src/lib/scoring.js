@@ -79,7 +79,8 @@ export function aggregateScores(history) {
       A:  { total: 0, right: 0, wrong: 0, tie: 0, accuracy: null },
       US: { total: 0, right: 0, wrong: 0, tie: 0, accuracy: null },
     },
-    byAnalyst: {},   // 仅 editor 用：记录主编"押对每位分析师"次数，未来扩展
+    bySector: {},  // sector 名 → { total, right, wrong, tie, accuracy }
+    byAnalyst: {}, // 仅 editor 用：记录主编"押对每位分析师"次数，未来扩展
   });
   const acc = Object.fromEntries(roleIds.map((id) => [id, init()]));
 
@@ -92,6 +93,7 @@ export function aggregateScores(history) {
     const scores = scoreEntry(e);
     if (!scores) return;
     const market = e.stockData?.market || 'A';
+    const sector = (e.stockData?.sector || '').trim() || null;
     roleIds.forEach((id) => {
       const s = scores[id];
       if (s === 'na') {
@@ -105,6 +107,14 @@ export function aggregateScores(history) {
       if (bm) {
         bm.total += 1;
         bm[s] += 1;
+      }
+      if (sector) {
+        if (!acc[id].bySector[sector]) {
+          acc[id].bySector[sector] = { total: 0, right: 0, wrong: 0, tie: 0, accuracy: null };
+        }
+        const bs = acc[id].bySector[sector];
+        bs.total += 1;
+        bs[s] += 1;
       }
     });
   });
@@ -120,6 +130,10 @@ export function aggregateScores(history) {
       const bm = r.byMarket[mk];
       const d = bm.right + bm.wrong;
       bm.accuracy = d > 0 ? bm.right / d : null;
+    });
+    Object.values(r.bySector).forEach((bs) => {
+      const d = bs.right + bs.wrong;
+      bs.accuracy = d > 0 ? bs.right / d : null;
     });
   });
 
@@ -182,3 +196,61 @@ export function daysUntilBackfill(entry, now = Date.now()) {
   if (remaining <= 0) return 0;
   return Math.ceil(remaining / (24 * 60 * 60 * 1000));
 }
+
+/* ──────────────────────────────────────────────────────────────
+   PERSONA SIGNAL · 把分析师的历史准确率转成 prompt 注入文本
+   设计：
+   - 仅当样本量 ≥ MIN_SAMPLE（5）时注入，否则返回 null
+   - 包含总准确率 + 本次股票所在 sector 的细分准确率（如果该 sector
+     的样本量 ≥ MIN_SECTOR_SAMPLE 3）
+   - 文字克制：不告诉模型该看多还是看空，只给"事实"，让它自己消化
+   ────────────────────────────────────────────────────────────── */
+
+export const MIN_SAMPLE_FOR_SIGNAL = 5;
+export const MIN_SECTOR_SAMPLE_FOR_SIGNAL = 3;
+
+/**
+ * @param {object} stats aggregateScores 输出
+ * @param {string} roleId 'value'|'tech'|'macro'|'risk'
+ * @param {string|null} currentSector 本次分析的股票所在行业
+ * @returns {string|null} 一段中文文本，可直接拼进 system prompt；样本不足返回 null
+ */
+export function buildPersonaSignal(stats, roleId, currentSector) {
+  const r = stats?.[roleId];
+  if (!r) return null;
+  const denom = (r.right || 0) + (r.wrong || 0);
+  if (denom < MIN_SAMPLE_FOR_SIGNAL) return null;
+
+  const totalAcc = (r.accuracy * 100).toFixed(0);
+  const lines = [`你在此前 ${denom} 次有定论的判断中，准确率为 ${totalAcc}%。`];
+
+  // 行业细分
+  if (currentSector && r.bySector?.[currentSector]) {
+    const bs = r.bySector[currentSector];
+    const bsDenom = (bs.right || 0) + (bs.wrong || 0);
+    if (bsDenom >= MIN_SECTOR_SAMPLE_FOR_SIGNAL && bs.accuracy != null) {
+      const sectorAcc = (bs.accuracy * 100).toFixed(0);
+      const compare =
+        bs.accuracy > r.accuracy + 0.1
+          ? '你在这个行业表现明显更好'
+          : bs.accuracy < r.accuracy - 0.1
+          ? '你在这个行业表现明显更弱'
+          : '与你的整体水平接近';
+      lines.push(
+        `在「${currentSector}」行业的 ${bsDenom} 次判断中准确率为 ${sectorAcc}%，${compare}。`
+      );
+    }
+  }
+
+  // 最近 trend：连错 3 次时提醒
+  const recentArr = r.recent || [];
+  const recent3 = recentArr.slice(0, 3);
+  if (recent3.length === 3 && recent3.every((s) => s === 'wrong')) {
+    lines.push('提示：你最近 3 次判断都被市场打脸，本次特别注意是否过于自信。');
+  } else if (recent3.length === 3 && recent3.every((s) => s === 'right')) {
+    lines.push('提示：你最近 3 次判断都对，本次警惕过度自信偏差。');
+  }
+
+  return lines.join(' ');
+}
+

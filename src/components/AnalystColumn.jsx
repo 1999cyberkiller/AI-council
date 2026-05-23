@@ -5,9 +5,10 @@
 import React from 'react';
 import { Stars, VerdictBadge, WireFeed } from './atoms';
 import { CandlestickChart } from './CandlestickChart';
+import { renderWithMentions } from './StockMention';
 
-export const AnalystColumn = ({ analyst, model, state, klineData, klineLoading, klineError, onRetry, grade, klineRange, onKlineRangeChange }) => {
-  const isPending = !state || state.status === 'pending' || state.status === 'waiting';
+export const AnalystColumn = ({ analyst, model, state, klineData, klineLoading, onRetry, onRetryWithModel, availableModels, grade, klineRange, onKlineRangeChange, mentionDict, currentCode, onSummonStock }) => {
+  const isPending = !state || state.status === 'pending';
   const isDone = state?.status === 'done';
   const isError = state?.status === 'error';
   const data = state?.data;
@@ -77,7 +78,7 @@ export const AnalystColumn = ({ analyst, model, state, klineData, klineLoading, 
           {!klineLoading && (!klineData || klineData.length === 0) && (
             <div className="kline-frame">
               <div className="kline-loading" style={{ fontSize: '0.7rem' }}>
-                {klineError ? `K 线数据不可用：${klineError}` : 'K 线数据不可用（可能为新股或频率限制）'}
+                K 线数据不可用（可能为新股或频率限制）
               </div>
             </div>
           )}
@@ -113,13 +114,10 @@ export const AnalystColumn = ({ analyst, model, state, klineData, klineLoading, 
             errorMsg={state?.error}
             rawPreview={state?.rawPreview}
             onRetry={isError ? onRetry : null}
+            availableModels={availableModels}
+            currentModelId={model?.id}
+            onRetryWithModel={isError ? onRetryWithModel : null}
           />
-          {state?.status === 'waiting' && (
-            <div className="wire-line" style={{ marginTop: 8, fontSize: '0.74rem' }}>
-              <span className="wire-marker">…</span>
-              <span style={{ color: 'var(--ink-faded)' }}>模型还在后台写稿，其他专栏先刊出。</span>
-            </div>
-          )}
           {isPending && (
             <div className="progress-bar">
               <div
@@ -189,16 +187,20 @@ export const AnalystColumn = ({ analyst, model, state, klineData, klineLoading, 
           </h3>
 
           <div
-            className="dropcap body-serif"
+            className="dropcap body-serif body-serif-indent"
             style={{
               fontSize: '1.04rem',
-              lineHeight: 1.62,
+              lineHeight: 1.65,
               marginBottom: '1.2rem',
               textAlign: 'justify',
               color: 'var(--ink)',
             }}
           >
-            {data.analysis}
+            {data.analysis.split(/\n+/).filter((p) => p.trim()).map((p, i) => (
+              <p key={i} style={{ margin: i === 0 ? '0 0 0.85em 0' : '0.85em 0 0.85em 0' }}>
+                {mentionDict ? renderWithMentions(p, mentionDict, currentCode, onSummonStock) : p}
+              </p>
+            ))}
           </div>
 
           <div style={{ marginBottom: '1.1rem' }}>

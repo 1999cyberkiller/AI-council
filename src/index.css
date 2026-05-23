@@ -36,30 +36,32 @@ body {
     --sell-light:   #D77B6A;
   }
 
-  /* 暗色模式：纯黑底 + 高对比阅读 */
+  /* 暗色模式：深炭底 + 米色字 + 酒红依旧 */
   .dispatch-root[data-theme="dark"] {
-    --paper:        #000000;
-    --paper-soft:   #050505;
-    --paper-dark:   #0B0B0B;
-    --ink:          #F4EAD0;
-    --ink-soft:     #D7C9A9;
-    --ink-faded:    #9B8F74;
-    --rule:         #B8AA8D;
-    --accent:       #C7553F;
+    --paper:        #1B1612;
+    --paper-soft:   #221C17;
+    --paper-dark:   #2B231C;
+    --ink:          #EAE0C8;
+    --ink-soft:     #C2B59A;   /* 提亮：4.0:1 → 5.5:1 */
+    --ink-faded:    #968871;   /* 提亮：3.5:1 → 4.7:1 (WCAG AA) */
+    --rule:         #B0A28C;
+    --accent:       #D86A52;   /* 暗底上更醒目 */
     --accent-soft:  #E07057;
-    --buy:          #35D38A;
-    --buy-light:    #79E7B2;
-    --hold:         #D9B05A;
+    --buy:          #7BC094;
+    --buy-light:    #9DD6AF;
+    --hold:         #DEB66B;
     --hold-light:   #ECCB7B;
-    --sell:         #FF6B4A;
-    --sell-light:   #FF927A;
+    --sell:         #DE6A52;
+    --sell-light:   #ED8773;
   }
   .dispatch-root[data-theme="dark"]::before {
-    background-image: none;
+    background-image:
+      radial-gradient(ellipse at 15% 20%, rgba(199, 85, 63, 0.06) 0%, transparent 60%),
+      radial-gradient(ellipse at 85% 80%, rgba(234, 224, 200, 0.04) 0%, transparent 60%);
   }
   .dispatch-root[data-theme="dark"]::after {
-    opacity: 0;
-    mix-blend-mode: normal;
+    opacity: 0.3;
+    mix-blend-mode: lighten;
   }
 
   .dispatch-root {
@@ -92,28 +94,6 @@ body {
   .mono { font-family: 'Courier Prime', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', monospace; }
   .small-caps { font-variant: small-caps; letter-spacing: 0.18em; }
   .ornament { color: var(--rule); letter-spacing: 0.45em; }
-
-  .masthead-meta {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    align-items: center;
-    text-align: center;
-    column-gap: 24px;
-  }
-  .masthead-meta span {
-    min-width: 0;
-    white-space: nowrap;
-  }
-  @media (max-width: 680px) {
-    .masthead-meta {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      row-gap: 6px;
-      column-gap: 12px;
-    }
-    .masthead-meta span {
-      white-space: normal;
-    }
-  }
 
   /* ── Input ────────────────────────────────────────────────────── */
   .input-field {
@@ -236,6 +216,70 @@ body {
   .ticker-arrow-down { color: var(--sell-light); font-weight: 700; }
   .ticker-label { color: var(--paper-dark); font-size: 0.7rem; }
 
+  /* ── Events Badge · 财报/分红等公司事件 ────────────────────── */
+  .events-badge {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    margin: 0;
+    background: var(--paper-dark);
+    border-bottom: 1px solid var(--ink-faded);
+    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-size: 0.78rem;
+  }
+  .events-badge--hint {
+    color: var(--ink-faded);
+    font-style: italic;
+    font-family: 'EB Garamond', 'Noto Serif SC', serif;
+    font-size: 0.82rem;
+  }
+  .ev-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border: 1px solid currentColor;
+    line-height: 1.4;
+  }
+  .ev-icon {
+    font-size: 0.86rem;
+    line-height: 1;
+  }
+  .ev-type {
+    letter-spacing: 0.06em;
+    font-weight: 600;
+  }
+  .ev-when {
+    color: inherit;
+    opacity: 0.85;
+  }
+  .ev-urgent {
+    color: var(--sell);
+    background: rgba(215, 123, 106, 0.08);
+  }
+  .ev-soon {
+    color: var(--hold);
+    background: rgba(212, 178, 106, 0.08);
+  }
+  .ev-far {
+    color: var(--ink-soft);
+    background: transparent;
+  }
+  .ev-buy {
+    color: var(--buy);
+    background: rgba(123, 184, 154, 0.08);
+  }
+  .ev-sell {
+    color: var(--sell);
+    background: rgba(215, 123, 106, 0.08);
+  }
+  @media (max-width: 640px) {
+    .events-badge { padding: 6px 10px; gap: 6px; font-size: 0.72rem; }
+    .ev-item { padding: 2px 6px; }
+  }
+
   /* ── Newspaper grid (2x2 for 4 analysts) ─────────────────────── */
   .news-grid {
     display: grid;
@@ -280,7 +324,8 @@ body {
   }
 
   /* ── Drop cap ────────────────────────────────────────────────── */
-  .dropcap::first-letter {
+  .dropcap::first-letter,
+  .dropcap > p:first-child::first-letter {
     float: left;
     font-family: 'Fraunces', 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
     font-size: 4.4em;
@@ -410,10 +455,22 @@ body {
   .ink-bleed { animation: inkBleed 0.8s ease-out; }
 
   @keyframes inkDevelop {
-    0% { opacity: 0; filter: blur(4px); }
-    100% { opacity: 1; filter: blur(0); }
+    0%   { opacity: 0; filter: blur(4px); transform: translateY(8px); }
+    60%  { opacity: 0.8; filter: blur(1px); transform: translateY(2px); }
+    100% { opacity: 1; filter: blur(0); transform: translateY(0); }
   }
-  .ink-develop { animation: inkDevelop 0.9s ease-out; }
+  .ink-develop { animation: inkDevelop 0.85s cubic-bezier(0.2, 0.65, 0.3, 1); }
+
+  /* When pending → done in a "race" context, slightly accent the freshly-arrived column */
+  @keyframes columnSettleHighlight {
+    0%   { box-shadow: 0 0 0 0 rgba(168, 70, 56, 0); }
+    20%  { box-shadow: 0 0 0 4px rgba(168, 70, 56, 0.18); }
+    100% { box-shadow: 0 0 0 0 rgba(168, 70, 56, 0); }
+  }
+  .ink-develop {
+    animation: inkDevelop 0.85s cubic-bezier(0.2, 0.65, 0.3, 1),
+               columnSettleHighlight 1.5s ease-out;
+  }
 
   /* ── Misc ────────────────────────────────────────────────────── */
   .key-point {
@@ -447,15 +504,6 @@ body {
     background: rgba(245, 239, 224, 0.5);
     padding: 8px 10px 4px;
     margin-bottom: 16px;
-  }
-  .dispatch-root[data-theme="dark"] .kline-frame {
-    background: #000000;
-    border-color: var(--rule);
-  }
-  .kline-frame svg,
-  .kline-frame svg * {
-    shape-rendering: geometricPrecision;
-    text-rendering: geometricPrecision;
   }
   .kline-title-row {
     display: flex;
@@ -573,7 +621,8 @@ body {
   .editor-body {
     padding: 28px 36px 32px;
   }
-  .editor-dropcap::first-letter {
+  .editor-dropcap::first-letter,
+  .editor-dropcap > p:first-child::first-letter {
     float: left;
     font-family: 'Fraunces', 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
     font-size: 4.6em;
@@ -583,10 +632,417 @@ body {
     font-weight: 800;
     color: var(--accent-soft);
   }
+
+  /* ── Editor key sentence (V17 关键句高亮) ─────────────────── */
+  .editor-keysent {
+    display: flex;
+    align-items: stretch;
+    gap: 14px;
+    margin: 0 0 22px;
+    padding: 14px 0 14px 0;
+    border-top: 1px solid rgba(240, 232, 214, 0.18);
+    border-bottom: 1px solid rgba(240, 232, 214, 0.18);
+  }
+  .editor-keysent-bar {
+    width: 3px;
+    background: var(--accent);
+    flex: 0 0 auto;
+    border-radius: 1px;
+  }
+  .editor-keysent-text {
+    font-family: 'Fraunces', 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
+    font-weight: 600;
+    font-size: 1.18rem;
+    line-height: 1.55;
+    color: var(--paper);
+    letter-spacing: 0.005em;
+    flex: 1;
+  }
+  @media (max-width: 640px) {
+    .editor-keysent-text { font-size: 1.05rem; }
+  }
+
+  /* ── V17 Reading polish ─────────────────────────────────── */
+  /* 段落最大宽度（70-80 字符舒适）— 仅作用在分析师专栏正文 */
+  .reading-measure {
+    max-width: 72ch;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  /* 中文首行缩进 — 通过 .body-serif-indent 标记的容器 */
+  .body-serif-indent p {
+    text-indent: 2em;
+  }
+  .body-serif-indent p:first-child {
+    text-indent: 0;  /* 第一段不缩进，避免和 drop cap 撞 */
+  }
+  /* 标点挤压 — 中文 punctuation alternates，让逗句号占宽更紧凑 */
+  .body-serif,
+  .editor-dropcap,
+  .display-serif {
+    font-feature-settings: 'palt' 1, 'pkna' 1;
+    text-spacing: trim-start allow-end;
+  }
+
   .editor-stat-card {
     border: 1px solid var(--paper-dark);
     padding: 14px 16px;
     background: rgba(240, 232, 214, 0.04);
+  }
+
+  /* ── Editor progress (V17 议会进度可视化) ────────────────── */
+  .editor-progress {
+    padding: 12px 16px;
+    border: 1px solid rgba(240, 232, 214, 0.18);
+    background: rgba(240, 232, 214, 0.04);
+  }
+  .editor-progress-bar {
+    height: 4px;
+    background: rgba(240, 232, 214, 0.12);
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .editor-progress-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.5s cubic-bezier(0.2, 0.65, 0.3, 1);
+  }
+  .editor-progress-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-size: 0.74rem;
+    color: var(--paper-dark);
+    letter-spacing: 0.06em;
+  }
+  .editor-progress-meta strong {
+    color: var(--paper);
+    font-weight: 700;
+    font-size: 0.88rem;
+  }
+  .editor-progress-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .editor-progress-chip {
+    padding: 2px 8px;
+    border: 1px solid currentColor;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    animation: chipPopIn 0.4s ease-out;
+  }
+  .editor-progress-chip--done {
+    color: var(--buy-light);
+  }
+  .editor-progress-chip--failed {
+    color: var(--sell-light);
+  }
+  @keyframes chipPopIn {
+    0%   { opacity: 0; transform: scale(0.7); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  /* ── QVMR · 交易纪律裁判 ───────────────────────────────── */
+  .qvmr-panel {
+    margin-top: 34px;
+    border: 2px solid var(--ink);
+    background: var(--paper);
+    box-shadow: 6px 6px 0 var(--accent);
+  }
+  .qvmr-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--ink);
+    background: var(--paper-dark);
+  }
+  .qvmr-kicker {
+    color: var(--ink-faded);
+    font-size: 0.66rem;
+  }
+  .qvmr-title {
+    margin: 4px 0 0;
+    font-size: 1.85rem;
+    line-height: 1;
+  }
+  .qvmr-action {
+    min-width: 118px;
+    border: 2px solid currentColor;
+    padding: 8px 12px;
+    text-align: right;
+    color: var(--hold);
+    background: rgba(255,255,255,0.18);
+  }
+  .qvmr-action span {
+    display: block;
+    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+  }
+  .qvmr-action strong {
+    display: block;
+    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-size: 2rem;
+    line-height: 1;
+  }
+  .qvmr-action--BUY,
+  .qvmr-action--STRONG_BUY { color: var(--buy); }
+  .qvmr-action--EXIT,
+  .qvmr-action--REDUCE,
+  .qvmr-action--HOLD_OR_REDUCE { color: var(--accent); }
+  .qvmr-body {
+    padding: 18px 22px 22px;
+  }
+  .qvmr-verdict-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    border: 1px solid var(--ink-faded);
+    background: var(--paper-soft);
+  }
+  .qvmr-verdict-row > div {
+    padding: 12px 14px;
+    border-right: 1px solid var(--ink-faded);
+  }
+  .qvmr-verdict-row > div:last-child {
+    border-right: 0;
+  }
+  .qvmr-verdict-row span {
+    display: block;
+    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-size: 0.64rem;
+    letter-spacing: 0.14em;
+    color: var(--ink-faded);
+  }
+  .qvmr-verdict-row strong {
+    display: block;
+    margin-top: 4px;
+    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-size: 1.1rem;
+    color: var(--ink);
+  }
+  .qvmr-hard-warning {
+    margin-top: 12px;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    background: rgba(139, 45, 31, 0.08);
+    padding: 10px 12px;
+    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+  }
+  .qvmr-score-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .qvmr-score-card {
+    border: 1px solid var(--ink-faded);
+    background: rgba(255,255,255,0.16);
+    padding: 10px 12px;
+  }
+  .qvmr-score-card span,
+  .qvmr-score-card small {
+    display: block;
+    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    color: var(--ink-faded);
+  }
+  .qvmr-score-card strong {
+    display: block;
+    margin-top: 6px;
+    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+  .qvmr-explain-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 14px;
+  }
+  .qvmr-explain-grid > div {
+    border: 1px solid var(--ink-faded);
+    padding: 12px 14px;
+    background: rgba(255,255,255,0.12);
+  }
+  .qvmr-explain-grid h4,
+  .qvmr-manual-group h4 {
+    margin: 0 0 8px;
+    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    color: var(--ink-soft);
+  }
+  .qvmr-explain-grid ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+  .qvmr-manual {
+    margin-top: 14px;
+    border: 1px dashed var(--ink-faded);
+    background: var(--paper-soft);
+  }
+  .qvmr-manual summary {
+    cursor: pointer;
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-size: 0.76rem;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+  }
+  .qvmr-manual summary em {
+    color: var(--ink-faded);
+    font-style: normal;
+  }
+  .qvmr-manual-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    padding: 0 14px 14px;
+  }
+  .qvmr-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 7px 0;
+    color: var(--ink-soft);
+    font-size: 0.84rem;
+    line-height: 1.35;
+  }
+  .qvmr-check input {
+    margin-top: 3px;
+    accent-color: var(--accent);
+  }
+  .qvmr-reset {
+    margin: 0 14px 14px;
+  }
+  @media (max-width: 900px) {
+    .qvmr-verdict-row,
+    .qvmr-score-grid,
+    .qvmr-explain-grid,
+    .qvmr-manual-grid {
+      grid-template-columns: 1fr;
+    }
+    .qvmr-verdict-row > div {
+      border-right: 0;
+      border-bottom: 1px solid var(--ink-faded);
+    }
+    .qvmr-verdict-row > div:last-child {
+      border-bottom: 0;
+    }
+  }
+
+  /* ── Investment Memo · 投资备忘录 ─────────────────────────── */
+  .investment-memo {
+    margin-top: 34px;
+    border: 2px solid var(--ink);
+    background: var(--paper-soft);
+    box-shadow: 6px 6px 0 var(--rule);
+  }
+  .investment-memo-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--ink-faded);
+  }
+  .investment-memo-kicker {
+    color: var(--ink-faded);
+    font-size: 0.66rem;
+  }
+  .investment-memo-title {
+    margin: 4px 0 0;
+    font-size: 1.8rem;
+    line-height: 1;
+    color: var(--ink);
+  }
+  .investment-memo-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .memo-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+  }
+  .memo-date input {
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--ink-faded);
+    padding: 5px 8px;
+    font-family: inherit;
+    font-size: 0.72rem;
+  }
+  .memo-save {
+    padding: 0.45rem 1rem;
+    font-size: 0.78rem;
+  }
+  .investment-memo-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--ink-faded);
+  }
+  .memo-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--paper-soft);
+    padding: 16px 18px;
+  }
+  .memo-field--thesis,
+  .memo-field--notes {
+    grid-column: 1 / -1;
+  }
+  .memo-field span {
+    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    color: var(--ink-soft);
+  }
+  .memo-field textarea {
+    width: 100%;
+    resize: vertical;
+    border: 1px solid var(--ink-faded);
+    background: rgba(255,255,255,0.16);
+    color: var(--ink);
+    padding: 10px 12px;
+    font-family: 'EB Garamond', 'Noto Serif SC', serif;
+    font-size: 1rem;
+    line-height: 1.55;
+    outline: none;
+  }
+  .memo-field textarea:focus {
+    border-color: var(--accent);
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+  @media (max-width: 760px) {
+    .investment-memo-head { flex-direction: column; }
+    .investment-memo-actions { justify-content: flex-start; }
+    .investment-memo-grid { grid-template-columns: 1fr; }
   }
 
   /* ── Consensus / Dissent · 结构化对比表 ──────────────────────── */
@@ -695,9 +1151,55 @@ body {
     border-left: 6px solid var(--accent-soft);
     box-shadow: 5px 5px 0 var(--ink-soft);
   }
+  .data-gap-panel--compact {
+    margin-top: 14px;
+    margin-bottom: 18px;
+    box-shadow: 3px 3px 0 var(--ink-soft);
+  }
   .data-gap-header {
     padding: 16px 24px 8px;
     border-bottom: 1px dashed var(--ink-faded);
+  }
+  .data-gap-source-grid {
+    padding: 14px 20px 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+  }
+  .data-gap-source-card {
+    border: 1px solid var(--ink-faded);
+    background: rgba(255,255,255,0.26);
+    padding: 10px 12px;
+    min-height: 74px;
+  }
+  .data-gap-source-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .data-gap-pill {
+    flex-shrink: 0;
+    border: 1px solid currentColor;
+    padding: 2px 7px;
+    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+  }
+  .data-gap-pill--pending { color: var(--ink-faded); }
+  .data-gap-pill--ok { color: var(--buy); }
+  .data-gap-pill--empty { color: var(--hold); }
+  .data-gap-pill--warning,
+  .data-gap-pill--error { color: var(--accent); }
+  .data-gap-source-detail {
+    color: var(--ink-soft);
+    font-size: 0.68rem;
+    line-height: 1.45;
+    word-break: break-word;
+  }
+  .data-gap-body--source {
+    padding-top: 0;
   }
   .data-gap-body {
     padding: 14px 24px 20px;
@@ -744,8 +1246,268 @@ body {
   @media (max-width: 640px) {
     .data-gap-header { padding: 12px 16px 6px; }
     .data-gap-body   { padding: 10px 16px 16px; }
+    .data-gap-source-grid { grid-template-columns: 1fr; padding: 12px 14px; }
     .data-gap-list li { font-size: 0.92rem; }
     .cd-row { padding: 10px 12px; }
+  }
+
+  .settings-actions-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .btn-ghost:disabled {
+    opacity: 0.55;
+    cursor: wait;
+  }
+  .model-health-grid {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+  }
+  .model-health-card {
+    border: 1px solid var(--ink-faded);
+    background: rgba(255,255,255,0.22);
+    padding: 10px 12px;
+  }
+  .model-health-card--ok { border-color: var(--buy); }
+  .model-health-card--error { border-color: var(--accent); }
+  .model-health-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+  .model-health-pill {
+    border: 1px solid currentColor;
+    padding: 2px 7px;
+    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+  .model-health-card--ok .model-health-pill { color: var(--buy); }
+  .model-health-card--error .model-health-pill { color: var(--accent); }
+  .model-health-card--pending .model-health-pill,
+  .model-health-card--missing .model-health-pill { color: var(--ink-faded); }
+  .model-health-detail {
+    color: var(--ink-soft);
+    font-size: 0.68rem;
+    line-height: 1.45;
+    word-break: break-word;
+  }
+
+  /* ── Run Console · 分析任务控制台 ─────────────────────────── */
+  .task-console {
+    margin: 14px 0 18px;
+    border: 1.5px solid var(--ink);
+    background: rgba(255,255,255,0.18);
+    box-shadow: 4px 4px 0 var(--ink-faded);
+  }
+  .task-console-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 14px 18px 10px;
+    border-bottom: 1px dashed var(--ink-faded);
+  }
+  .task-console-kicker {
+    font-size: 0.68rem;
+    letter-spacing: 0.24em;
+    color: var(--accent-soft);
+  }
+  .task-console-sub {
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    font-style: italic;
+    margin-top: 4px;
+  }
+  .task-console-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .task-console-count {
+    color: var(--ink-soft);
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+  }
+  .task-console-btn {
+    padding: 4px 10px;
+    font-size: 0.68rem;
+  }
+  .task-console-stop {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .task-console-grid {
+    padding: 12px 16px 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 10px;
+  }
+  .task-card {
+    border: 1px solid var(--ink-faded);
+    background: var(--paper-soft);
+    padding: 10px 12px;
+    min-height: 92px;
+  }
+  .task-card--ok { border-color: var(--buy); }
+  .task-card--warning { border-color: var(--hold); }
+  .task-card--error,
+  .task-card--stopped { border-color: var(--accent); }
+  .task-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 7px;
+  }
+  .task-card-title {
+    font-size: 0.94rem;
+    font-weight: 700;
+  }
+  .task-card-pill {
+    border: 1px solid currentColor;
+    padding: 2px 7px;
+    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    color: var(--ink-faded);
+    white-space: nowrap;
+  }
+  .task-card--ok .task-card-pill { color: var(--buy); }
+  .task-card--warning .task-card-pill { color: var(--hold); }
+  .task-card--error .task-card-pill,
+  .task-card--stopped .task-card-pill { color: var(--accent); }
+  .task-card-meta,
+  .task-card-fallback,
+  .task-card-error {
+    color: var(--ink-soft);
+    font-size: 0.68rem;
+    line-height: 1.45;
+    word-break: break-word;
+  }
+  .task-card-fallback {
+    color: var(--hold);
+    margin-top: 4px;
+  }
+  .task-card-error {
+    color: var(--accent);
+    margin-top: 4px;
+  }
+
+  /* ── Watchlist Scan · 自选股巡检 ───────────────────────────── */
+  .watchlist-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+    padding: 10px 12px;
+    border: 1px dashed var(--ink-faded);
+    background: rgba(255,255,255,0.18);
+  }
+  .watchlist-scan-meta {
+    color: var(--ink-soft);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+  }
+  .watchlist-item-wrap {
+    display: flex;
+    flex-direction: column;
+  }
+  .watchlist-scan-line {
+    margin-top: 7px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+  }
+  .watchlist-scan-line--ok { color: var(--buy); }
+  .watchlist-scan-line--warning { color: var(--hold); }
+  .watchlist-scan-line--error { color: var(--accent); }
+  .watchlist-scan-line--pending { color: var(--ink-faded); }
+  .watchlist-brief {
+    margin-bottom: 14px;
+    border: 1px solid var(--ink);
+    background: var(--paper-dark);
+  }
+  .watchlist-brief-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--ink-faded);
+  }
+  .watchlist-brief-kicker {
+    color: var(--ink-faded);
+    font-size: 0.62rem;
+  }
+  .watchlist-brief-title {
+    margin-top: 3px;
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+  .watchlist-brief-count {
+    color: var(--ink-soft);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+  .watchlist-brief-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .watchlist-brief-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1.2fr;
+    align-items: center;
+    gap: 10px;
+    border: 0;
+    border-bottom: 1px solid rgba(107, 93, 74, 0.32);
+    background: transparent;
+    color: var(--ink);
+    padding: 9px 14px;
+    text-align: left;
+    cursor: pointer;
+    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-size: 0.72rem;
+  }
+  .watchlist-brief-row:last-child {
+    border-bottom: 0;
+  }
+  .watchlist-brief-row:hover {
+    background: rgba(255,255,255,0.18);
+  }
+  .watchlist-brief-row--warning span:nth-child(2) {
+    color: var(--hold);
+    font-weight: 700;
+  }
+  .watchlist-brief-row--error span:nth-child(2),
+  .watchlist-brief-row--error span:nth-child(3) {
+    color: var(--accent);
+  }
+  .watchlist-brief-empty {
+    padding: 12px 14px;
+    color: var(--ink-soft);
+    font-size: 0.86rem;
+    font-style: italic;
+  }
+  @media (max-width: 640px) {
+    .watchlist-brief-head { flex-direction: column; }
+    .watchlist-brief-row { grid-template-columns: 1fr; }
   }
 
   /* 打印模式：数据缺口面板压平为纯文本，节省墨水 */
@@ -982,6 +1744,1127 @@ body {
     padding: 40px 24px 32px;
     text-align: center;
     color: var(--ink-faded);
+  }
+
+  /* ── Empty / Waiting banners ─────────────────────────────────── */
+  .cred-banner {
+    margin: 18px 24px;
+    padding: 14px 18px;
+    border: 1.5px solid var(--ink-faded);
+    background: rgba(240, 232, 214, 0.4);
+  }
+  .cred-banner--empty {
+    border-color: var(--ink-faded);
+    background: rgba(240, 232, 214, 0.55);
+  }
+  .cred-banner--waiting {
+    border-color: var(--accent);
+    border-left: 4px solid var(--accent);
+    background: rgba(168, 70, 56, 0.05);
+  }
+  .cred-banner-title {
+    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+  .cred-banner-body {
+    font-family: 'EB Garamond', 'Noto Serif SC', serif;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+  }
+  .cred-banner-body strong {
+    color: var(--ink);
+  }
+
+  /* "neutral" accuracy class for empty cards */
+  .cred-pct--neutral { color: var(--ink-faded); }
+
+  /* ── Second Round Section · 议会二次审稿 ───────────────────── */
+  .second-round-wrap {
+    margin: 24px 0 32px;
+    border: 1.5px solid var(--ink);
+    border-left: 5px solid var(--accent);
+    background: var(--paper);
+    position: relative;
+  }
+  .second-round-wrap::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: -6px;
+    right: 6px;
+    bottom: 6px;
+    background: var(--ink-faded);
+    z-index: -1;
+    opacity: 0.18;
+  }
+  .second-round-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--ink-faded);
+    background: var(--paper-dark);
+    gap: 12px;
+  }
+  .sr-collapse-btn {
+    background: transparent;
+    border: 1px solid var(--ink-faded);
+    color: var(--ink-soft);
+    padding: 4px 12px;
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .sr-collapse-btn:hover {
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+  .second-round-body {
+    padding: 18px 20px 22px;
+  }
+  .sr-topic {
+    padding-bottom: 18px;
+    border-bottom: 1px dashed var(--ink-faded);
+    margin-bottom: 18px;
+  }
+  .sr-topic:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+  .sr-topic-label {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--ink-faded);
+  }
+  .sr-topic-title {
+    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-size: 1.02rem;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.35;
+  }
+
+  /* 两位反驳并排 */
+  .sr-rebuttals {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 760px) {
+    .sr-rebuttals { grid-template-columns: 1fr; }
+  }
+  .sr-rebut {
+    background: var(--paper-dark);
+    border: 1px solid var(--ink-faded);
+    padding: 12px 14px;
+  }
+  .sr-rebut--pending {
+    border-style: dashed;
+    color: var(--ink-faded);
+  }
+  .sr-rebut--error {
+    border-color: var(--sell);
+    background: rgba(215, 123, 106, 0.06);
+  }
+  .sr-rebut-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px dashed var(--ink-faded);
+  }
+  .sr-rebut-name {
+    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .sr-rebut-loading {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.72rem;
+    color: var(--ink-faded);
+    font-style: italic;
+  }
+  .sr-rebut-err {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.7rem;
+    color: var(--sell);
+  }
+  .sr-rebut-body {
+    font-size: 0.88rem;
+    line-height: 1.65;
+    color: var(--ink);
+  }
+
+  /* 主编二审块 */
+  .sr-editor {
+    background: linear-gradient(180deg, var(--paper-dark) 0%, var(--paper) 100%);
+    border: 1.5px solid var(--ink);
+    padding: 14px 18px;
+    position: relative;
+  }
+  .sr-editor--shifted {
+    border-color: var(--accent);
+    border-left: 4px solid var(--accent);
+  }
+  .sr-editor--pending,
+  .sr-editor--error {
+    border-style: dashed;
+    text-align: center;
+    color: var(--ink-faded);
+    font-style: italic;
+    font-family: 'EB Garamond', 'Noto Serif SC', serif;
+  }
+  .sr-editor-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px dashed var(--ink-faded);
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .sr-editor-verdict {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .sr-shifted-badge {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    background: rgba(168, 70, 56, 0.08);
+    padding: 2px 8px;
+    letter-spacing: 0.06em;
+  }
+  .sr-editor-headline {
+    font-size: 1.06rem;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.35;
+    margin-bottom: 8px;
+  }
+  .sr-editor-synthesis {
+    font-size: 0.92rem;
+    line-height: 1.7;
+    color: var(--ink);
+  }
+  .sr-shift-reason {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--ink-faded);
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    flex-wrap: wrap;
+  }
+
+  /* Verdict pills */
+  .sr-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    border: 1px solid currentColor;
+    padding: 2px 8px;
+    letter-spacing: 0.04em;
+  }
+  .sr-pill--sm { font-size: 0.78rem; }
+  .sr-pill--md { font-size: 0.92rem; padding: 3px 10px; }
+  .sr-pill--buy  { color: var(--buy);  background: rgba(123,184,154,0.1); }
+  .sr-pill--sell { color: var(--sell); background: rgba(215,123,106,0.1); }
+  .sr-pill--hold { color: var(--hold); background: rgba(212,178,106,0.1); }
+  .sr-pill-conv {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.7em;
+    opacity: 0.85;
+    font-weight: 400;
+  }
+
+  /* "追问"按钮（在 EditorSection 末尾） */
+  .second-round-trigger {
+    margin: 18px auto 0;
+    display: block;
+    background: transparent;
+    border: 1.5px solid var(--accent);
+    color: var(--accent);
+    padding: 8px 22px;
+    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s;
+    letter-spacing: 0.04em;
+  }
+  .second-round-trigger:hover:not(:disabled) {
+    background: var(--accent);
+    color: var(--paper);
+  }
+  .second-round-trigger:disabled {
+    border-color: var(--ink-faded);
+    color: var(--ink-faded);
+    cursor: not-allowed;
+  }
+  .second-round-trigger-note {
+    text-align: center;
+    margin-top: 6px;
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.68rem;
+    color: var(--ink-faded);
+    letter-spacing: 0.04em;
+  }
+
+  /* V18 换模型重试 dropdown */
+  .retry-model-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 30;
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    box-shadow: 3px 3px 0 var(--ink-faded);
+    min-width: 160px;
+    padding: 4px 0;
+    animation: chipPopIn 0.2s ease-out;
+  }
+  .retry-model-menu-item {
+    display: block;
+    width: 100%;
+    background: transparent;
+    border: none;
+    text-align: left;
+    padding: 8px 14px;
+    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-size: 0.86rem;
+    color: var(--ink);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+  }
+  .retry-model-menu-item:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  /* ── Free Ask Section (V19 自由追问) ──────────────────────── */
+  .free-ask-wrap {
+    margin: 24px 0 32px;
+    border: 1.5px solid var(--ink);
+    border-left: 5px solid var(--ink-soft);
+    background: var(--paper);
+  }
+  .free-ask-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--ink-faded);
+    background: var(--paper-dark);
+  }
+  .free-ask-body {
+    padding: 18px 20px 22px;
+  }
+  .fa-threads {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-bottom: 22px;
+  }
+  .fa-thread {
+    padding-bottom: 16px;
+    border-bottom: 1px dashed var(--ink-faded);
+  }
+  .fa-thread:last-child { border-bottom: none; padding-bottom: 0; }
+  .fa-question {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .fa-q-marker {
+    background: var(--ink);
+    color: var(--paper);
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 0.82rem;
+    padding: 2px 9px;
+    flex: 0 0 auto;
+  }
+  .fa-q-text {
+    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.4;
+  }
+  .fa-q-picks {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.72rem;
+    color: var(--ink-faded);
+    letter-spacing: 0.04em;
+  }
+  .fa-answers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  @media (max-width: 760px) {
+    .fa-answers { grid-template-columns: 1fr; }
+  }
+  .fa-answer {
+    background: var(--paper-dark);
+    border: 1px solid var(--ink-faded);
+    padding: 12px 14px;
+  }
+  .fa-answer--pending { border-style: dashed; color: var(--ink-faded); }
+  .fa-answer--error { border-color: var(--sell); background: rgba(215, 123, 106, 0.06); }
+  .fa-answer--shifted { border-left: 3px solid var(--accent); }
+  .fa-answer-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px dashed var(--ink-faded);
+    flex-wrap: wrap;
+  }
+  .fa-answer-name {
+    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .fa-answer-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .fa-confidence {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.7rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.06em;
+  }
+  .fa-shift-badge {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.68rem;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 1px 6px;
+    background: rgba(168, 70, 56, 0.08);
+    letter-spacing: 0.04em;
+  }
+  .fa-answer-loading,
+  .fa-answer-err {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.7rem;
+    color: var(--ink-faded);
+    font-style: italic;
+  }
+  .fa-answer-err { color: var(--sell); }
+  .fa-answer-body {
+    font-size: 0.88rem;
+    line-height: 1.65;
+    color: var(--ink);
+  }
+  .fa-editor {
+    margin-top: 4px;
+    background: linear-gradient(180deg, var(--paper-dark) 0%, var(--paper) 100%);
+    border: 1px solid var(--ink);
+    padding: 12px 14px;
+  }
+  .fa-editor-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 6px;
+    padding-bottom: 5px;
+    border-bottom: 1px dashed var(--ink-faded);
+    flex-wrap: wrap;
+  }
+  .fa-editor-consensus {
+    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-size: 0.82rem;
+    font-style: italic;
+    color: var(--ink-soft);
+  }
+  .fa-editor-synthesis {
+    font-size: 0.88rem;
+    line-height: 1.65;
+    color: var(--ink);
+  }
+  .fa-editor-loading,
+  .fa-editor-err {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.74rem;
+    color: var(--ink-faded);
+    font-style: italic;
+  }
+  .fa-editor-err { color: var(--sell); }
+  /* 输入区 */
+  .fa-input-block {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .fa-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--ink-faded);
+    background: var(--paper-dark);
+    font-family: 'EB Garamond', 'Noto Serif SC', serif;
+    font-size: 0.95rem;
+    color: var(--ink);
+    line-height: 1.5;
+    resize: vertical;
+    box-sizing: border-box;
+  }
+  .fa-textarea:focus {
+    outline: none;
+    border-color: var(--ink);
+  }
+  .fa-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .fa-picks-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex: 1;
+    min-width: 0;
+  }
+  .fa-picks-label {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.08em;
+  }
+  .fa-picks-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .fa-pick-chip {
+    background: transparent;
+    border: 1px solid var(--ink-faded);
+    color: var(--ink-soft);
+    padding: 3px 10px;
+    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .fa-pick-chip:hover:not(:disabled) {
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+  .fa-pick-chip--active {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  .fa-pick-chip:disabled { opacity: 0.5; cursor: not-allowed; }
+  .fa-picks-hint {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.66rem;
+    color: var(--ink-faded);
+    letter-spacing: 0.04em;
+  }
+  .fa-submit-btn {
+    background: var(--accent);
+    color: var(--paper);
+    border: none;
+    padding: 7px 18px;
+    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.15s;
+    flex: 0 0 auto;
+  }
+  .fa-submit-btn:hover:not(:disabled) { filter: brightness(0.92); }
+  .fa-submit-btn:disabled {
+    background: var(--ink-faded);
+    cursor: not-allowed;
+  }
+  .fa-cost-note {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.68rem;
+    color: var(--ink-faded);
+    letter-spacing: 0.04em;
+    text-align: right;
+  }
+  .fa-empty {
+    padding: 28px 12px;
+    text-align: center;
+    color: var(--ink-faded);
+    font-style: italic;
+    font-size: 0.92rem;
+  }
+
+  /* ── Financials Badge (V20 4Q 财务) ─────────────────────── */
+  .fin-badge {
+    margin: 14px 0 0;
+    border: 1px solid var(--ink-faded);
+    background: var(--paper);
+  }
+  .fin-badge-summary {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    padding: 8px 14px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.12s;
+    flex-wrap: wrap;
+  }
+  .fin-badge-summary:hover {
+    background: var(--paper-dark);
+  }
+  .fin-badge-label {
+    flex: 0 0 auto;
+    color: var(--ink-faded);
+    font-size: 0.66rem;
+    letter-spacing: 0.12em;
+  }
+  .fin-mini-row {
+    display: flex;
+    gap: 22px;
+    flex: 1;
+    flex-wrap: wrap;
+  }
+  .fin-mini {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .fin-mini-label {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.7rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.06em;
+  }
+  .fin-mini-last {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.78rem;
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .fin-spark {
+    vertical-align: middle;
+  }
+  .fin-spark-empty {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.7rem;
+    color: var(--ink-faded);
+  }
+  .fin-badge-toggle {
+    flex: 0 0 auto;
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.7rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.06em;
+  }
+  .fin-badge-table {
+    padding: 8px 14px 12px;
+    border-top: 1px solid var(--ink-faded);
+    background: var(--paper-dark);
+    overflow-x: auto;
+  }
+  .fin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-size: 0.78rem;
+  }
+  .fin-table th {
+    text-align: right;
+    padding: 6px 8px;
+    color: var(--ink-soft);
+    font-weight: 600;
+    border-bottom: 1px solid var(--ink-faded);
+  }
+  .fin-table th:first-child {
+    text-align: left;
+  }
+  .fin-table td {
+    padding: 5px 8px;
+    text-align: right;
+    color: var(--ink);
+    border-bottom: 1px dashed var(--ink-faded);
+  }
+  .fin-row-label {
+    text-align: left !important;
+    color: var(--ink-soft) !important;
+    font-weight: 500;
+  }
+  .fin-neg { color: var(--sell) !important; }
+  .fin-table-period {
+    font-size: 0.66rem;
+    color: var(--ink-faded);
+    font-weight: 400;
+  }
+  .fin-table-note {
+    margin-top: 8px;
+    font-size: 0.66rem;
+    color: var(--ink-faded);
+    text-align: right;
+    letter-spacing: 0.04em;
+  }
+  @media (max-width: 640px) {
+    .fin-mini-row { gap: 12px; }
+    .fin-table { font-size: 0.72rem; }
+  }
+
+  /* ── News Badge (V21 近期资讯) ────────────────────────────── */
+  .news-badge {
+    margin: 10px 0 0;
+    border: 1px solid var(--ink-faded);
+    background: var(--paper);
+  }
+  .news-badge-summary {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 8px 14px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.12s;
+    flex-wrap: wrap;
+  }
+  .news-badge-summary:hover {
+    background: var(--paper-dark);
+  }
+  .news-badge-label {
+    flex: 0 0 auto;
+    color: var(--ink-faded);
+    font-size: 0.66rem;
+    letter-spacing: 0.12em;
+  }
+  .news-badge-meta {
+    flex: 1;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-size: 0.74rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.02em;
+    min-width: 0;
+  }
+  .news-count {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .news-newest {
+    color: var(--ink-soft);
+  }
+  .news-sources {
+    color: var(--ink-faded);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .news-badge-toggle {
+    flex: 0 0 auto;
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.7rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.06em;
+  }
+  .news-badge-list {
+    padding: 6px 14px 12px;
+    border-top: 1px solid var(--ink-faded);
+    background: var(--paper-dark);
+  }
+  .news-item {
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--ink-faded);
+  }
+  .news-item:last-of-type {
+    border-bottom: none;
+  }
+  .news-item-head {
+    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-size: 0.7rem;
+    color: var(--ink-faded);
+    letter-spacing: 0.04em;
+    margin-bottom: 5px;
+  }
+  .news-item-source {
+    color: var(--ink-soft);
+    margin-left: 4px;
+  }
+  .news-item-headline {
+    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.4;
+    margin-bottom: 5px;
+  }
+  .news-item-headline a {
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 1px dashed var(--ink-faded);
+    transition: border-color 0.15s;
+  }
+  .news-item-headline a:hover {
+    border-bottom-color: var(--accent);
+  }
+  .news-item-summary {
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--ink-soft);
+  }
+  .news-list-note {
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid var(--ink-faded);
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.66rem;
+    color: var(--ink-faded);
+    text-align: right;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Stock Mention (V19 语义跳转) ─────────────────────────── */
+  .stock-mention-wrap {
+    position: relative;
+    display: inline;
+    white-space: nowrap;
+  }
+  .stock-mention {
+    background: transparent;
+    border: none;
+    color: var(--accent);
+    border-bottom: 1px dashed var(--accent);
+    padding: 0 1px;
+    font: inherit;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+  }
+  .stock-mention:hover {
+    background: rgba(168, 70, 56, 0.08);
+    color: var(--accent);
+  }
+  .stock-mention--self {
+    color: var(--ink);
+    border-bottom: 1px solid var(--ink-faded);
+    font-weight: 600;
+    cursor: default;
+  }
+  .stock-mention-popover {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 25;
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    box-shadow: 3px 3px 0 var(--ink-faded);
+    padding: 10px 12px;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-style: normal;
+    white-space: normal;
+    animation: chipPopIn 0.16s ease-out;
+  }
+  .stock-mention-popover-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .stock-mention-popover-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--ink);
+  }
+  .stock-mention-popover-code {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.74rem;
+    color: var(--ink-faded);
+    letter-spacing: 0.08em;
+  }
+  .stock-mention-popover-meta {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.7rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .stock-mention-summon-btn {
+    margin-top: 4px;
+    background: var(--accent);
+    color: var(--paper);
+    border: none;
+    padding: 6px 10px;
+    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.15s;
+  }
+  .stock-mention-summon-btn:hover {
+    filter: brightness(0.92);
+  }
+
+  /* ── Evolution Timeline (V18 同股演化) ────────────────────── */
+  .evo-wrap {
+    background: var(--paper);
+    border: 1px solid var(--ink-faded);
+    border-left: 4px solid var(--accent);
+    padding: 16px 20px;
+    margin: 20px 0 24px;
+  }
+  .evo-wrap--modal {
+    border-left-width: 1px;
+    border: 1px solid var(--ink-faded);
+    background: var(--paper);
+    padding: 0;
+    margin: 0;
+  }
+  .evo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed var(--ink-faded);
+    margin-bottom: 14px;
+  }
+  .evo-wrap--modal .evo-header {
+    padding: 18px 22px 14px;
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--ink-faded);
+  }
+  .evo-spark {
+    margin: 0 0 14px;
+    padding: 4px 0;
+    border-top: 1px dashed var(--ink-faded);
+    border-bottom: 1px dashed var(--ink-faded);
+  }
+  .evo-wrap--modal .evo-spark {
+    padding: 10px 22px;
+    border-top: none;
+  }
+  .evo-nodes {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .evo-wrap--modal .evo-nodes {
+    padding: 14px 22px 18px;
+  }
+  .evo-node {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    gap: 12px 14px;
+    align-items: start;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed var(--ink-faded);
+  }
+  .evo-node:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .evo-node-marker-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    grid-row: 1 / span 2;
+    align-self: center;
+  }
+  .evo-node-marker {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    transition: transform 0.15s;
+  }
+  .evo-node-marker-btn:hover .evo-node-marker {
+    transform: scale(1.08);
+  }
+  .evo-node-marker-label {
+    font-family: 'Courier Prime', monospace;
+    font-weight: 700;
+    font-size: 0.74rem;
+    color: var(--paper);
+    line-height: 1;
+  }
+  .evo-node-meta {
+    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
+    min-width: 90px;
+  }
+  .evo-node-date {
+    color: var(--ink);
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .evo-node-rel {
+    color: var(--ink-faded);
+    font-size: 0.66rem;
+  }
+  .evo-node-summary {
+    flex: 1;
+    min-width: 0;
+  }
+  .evo-node-verdict-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 5px;
+  }
+  .evo-pill {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 0.78rem;
+    border: 1px solid currentColor;
+    padding: 1px 7px;
+    letter-spacing: 0.04em;
+  }
+  .evo-price {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+  .evo-outcome {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.7rem;
+    padding: 1px 6px;
+    border: 1px solid currentColor;
+    letter-spacing: 0.04em;
+  }
+  .evo-outcome--up { color: var(--buy); }
+  .evo-outcome--down { color: var(--sell); }
+  .evo-outcome--tie { color: var(--ink-faded); }
+  .evo-node-headline {
+    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-size: 0.94rem;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.4;
+  }
+  .evo-node-expanded {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--ink-faded);
+  }
+  .evo-node-keysent {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 8px;
+    padding: 6px 0;
+  }
+  .evo-keysent-bar {
+    width: 3px;
+    background: var(--accent);
+    flex: 0 0 auto;
+  }
+  .evo-node-keysent > span:last-child {
+    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .evo-node-watchpoint {
+    font-family: 'EB Garamond', 'Noto Serif SC', serif;
+    font-size: 0.86rem;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    margin-bottom: 8px;
+  }
+  .evo-node-detail-grid {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding-top: 6px;
+    border-top: 1px dashed var(--ink-faded);
+  }
+  .evo-detail-cell {
+    font-family: 'Courier Prime', monospace;
+  }
+  .evo-detail-label {
+    font-size: 0.62rem;
+    color: var(--ink-faded);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  .evo-detail-value {
+    font-size: 0.84rem;
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .evo-detail-votes { letter-spacing: 0.08em; }
+  .evo-empty {
+    padding: 40px 22px;
+    text-align: center;
+  }
+  .evo-modal-footer {
+    padding: 12px 22px;
+    border-top: 1px dashed var(--ink-faded);
+    text-align: center;
+    background: rgba(240, 232, 214, 0.4);
+  }
+  /* 紧凑型 trigger (主分析页面顶部小条) */
+  .evo-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: 1px dashed var(--accent);
+    color: var(--accent);
+    padding: 5px 12px;
+    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .evo-trigger:hover {
+    background: var(--accent);
+    color: var(--paper);
+    border-style: solid;
   }
 
   /* ── Compare Panel · 横向对比面板 ──────────────────────────── */
@@ -1492,76 +3375,108 @@ body {
   .grade-C { color: var(--hold); }
   .grade-D { color: var(--sell); }
 
-  /* ── Edition strip (顶部容器：版次+宣言+按钮) ─────────────────── */
+  /* ── Edition strip (顶部一行：元信息 · 宣言 · 按钮) ─────────── */
   .edition-strip {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    justify-content: space-between;
     gap: 16px;
-    flex-wrap: wrap;
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
-    font-size: 0.7rem;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--ink);
+    color: var(--ink-soft);
     border-bottom: 1px solid var(--ink);
-    padding-bottom: 8px;
-    margin-bottom: 14px;
+    padding-bottom: 12px;
+    margin-bottom: 18px;
   }
-  .edition-vol {
-    flex: 0 0 auto;
+  .edition-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    min-width: 0;
+    justify-self: start;
+  }
+  .edition-year {
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .edition-no {
+    color: var(--ink-soft);
+  }
+  .edition-weekday {
+    color: var(--ink-soft);
+    letter-spacing: 0.18em;
+  }
+  .edition-sep {
+    color: var(--ink-faded);
   }
   .edition-tagline {
-    flex: 1 1 auto;
-    text-align: center;
-    text-transform: none;
+    font-family: 'EB Garamond', 'Noto Serif SC', 'Songti SC', serif;
+    font-style: italic;
+    font-size: 0.86rem;
+    color: var(--ink-soft);
     letter-spacing: 0.05em;
-    min-width: 0;
+    text-align: center;
+    justify-self: center;
+    white-space: nowrap;
   }
-  .top-actions-inline {
-    flex: 0 0 auto;
+  /* 中等宽度 (640-900px)：宣言会挤住，缩小再不行就先隐 */
+  @media (max-width: 900px) and (min-width: 641px) {
+    .edition-tagline {
+      font-size: 0.78rem;
+      letter-spacing: 0.02em;
+    }
+  }
+  @media (max-width: 760px) and (min-width: 641px) {
+    .edition-tagline {
+      display: none;
+    }
   }
 
   /* ── Action button bar ─────────────────────────────────────── */
   .action-bar {
     display: flex;
-    gap: 10px;
+    gap: 6px;
     align-items: center;
+    justify-self: end;
+    flex: 0 0 auto;
     transition: box-shadow 0.2s, background 0.2s;
   }
+  /* 滚动后浮起：固定到右上角 */
   .action-bar.action-bar--sticky {
     position: fixed;
-    top: 16px;
+    top: 14px;
     right: 22px;
     z-index: 60;
-    padding: 8px 10px;
-    background: color-mix(in srgb, var(--paper) 92%, transparent);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    padding: 6px 8px;
+    background: color-mix(in srgb, var(--paper) 90%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--ink-faded);
-    box-shadow: 4px 4px 0 var(--ink-soft);
+    box-shadow: 3px 3px 0 var(--ink-soft);
     animation: action-bar-drop 0.22s ease-out;
   }
   @keyframes action-bar-drop {
     from { transform: translateY(-12px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    to   { transform: translateY(0); opacity: 1; }
   }
   .action-btn {
-    width: 44px;
-    height: 44px;
+    width: 32px;
+    height: 32px;
     background: var(--paper);
     border: 1.5px solid var(--ink);
-    box-shadow: 3px 3px 0 var(--ink-soft);
+    box-shadow: 2px 2px 0 var(--ink-faded);
     color: var(--ink);
     cursor: pointer;
     font-family: 'Fraunces', serif;
-    font-size: 1.4rem;
-    font-weight: 700;
+    font-size: 0.95rem;
+    font-weight: 600;
     line-height: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.18s;
+    transition: transform 0.15s, box-shadow 0.15s, background 0.15s, color 0.15s;
     padding: 0;
     position: relative;
   }
@@ -1569,10 +3484,10 @@ body {
     background: var(--ink);
     color: var(--paper);
     transform: translate(-1px, -1px);
-    box-shadow: 4px 4px 0 var(--accent);
+    box-shadow: 3px 3px 0 var(--accent);
   }
   .action-btn:disabled {
-    opacity: 0.42;
+    opacity: 0.4;
     cursor: not-allowed;
     background: var(--paper);
     color: var(--ink-faded);
@@ -1582,37 +3497,45 @@ body {
   .action-btn:disabled:hover {
     background: var(--paper);
     color: var(--ink-faded);
+    border-color: var(--ink-faded);
     transform: none;
     box-shadow: 2px 2px 0 var(--ink-faded);
   }
+  /* When the bar floats (sticky after scroll), bump up size for visibility */
+  .action-bar--sticky .action-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 1.05rem;
+    box-shadow: 3px 3px 0 var(--ink-soft);
+  }
   .action-btn-badge {
     position: absolute;
-    top: -6px;
-    right: -6px;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 4px;
-    border-radius: 9px;
+    top: -5px;
+    right: -5px;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 3px;
+    border-radius: 8px;
     background: var(--ink);
     color: var(--paper);
     font-family: 'Courier Prime', monospace;
-    font-size: 0.62rem;
+    font-size: 0.56rem;
     font-weight: 700;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid var(--paper);
+    border: 1.5px solid var(--paper);
     line-height: 1;
   }
   .action-btn-dot {
     position: absolute;
-    top: -3px;
-    right: -3px;
-    width: 10px;
-    height: 10px;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     background: var(--accent);
-    border: 2px solid var(--paper);
+    border: 1.5px solid var(--paper);
   }
 
   /* ── 移动端适配 (≤640px) ─────────────────────────────────────── */
@@ -1644,19 +3567,39 @@ body {
       padding: 6px 8px !important;
     }
     .action-btn {
-      width: 38px !important;
-      height: 38px !important;
-      font-size: 1.15rem !important;
-      box-shadow: 2px 2px 0 var(--ink-soft) !important;
+      width: 30px !important;
+      height: 30px !important;
+      font-size: 0.95rem !important;
     }
+    .action-bar--sticky .action-btn {
+      width: 34px !important;
+      height: 34px !important;
+      font-size: 1.05rem !important;
+    }
+    /* 移动端 edition-strip：宣言换到第二行，meta + 按钮一行 */
     .edition-strip {
-      gap: 8px !important;
-      font-size: 0.62rem !important;
+      grid-template-columns: 1fr auto !important;
+      grid-template-areas:
+        'meta buttons'
+        'tagline tagline' !important;
+      gap: 8px 12px !important;
+      row-gap: 6px !important;
+    }
+    .edition-meta {
+      grid-area: meta;
+      font-size: 0.66rem !important;
+      gap: 6px !important;
+      letter-spacing: 0.14em !important;
     }
     .edition-tagline {
-      flex-basis: 100%;
-      order: 3;
-      text-align: left;
+      grid-area: tagline;
+      font-size: 0.78rem !important;
+      letter-spacing: 0.04em !important;
+      text-align: center !important;
+      white-space: normal !important;
+    }
+    .action-bar {
+      grid-area: buttons;
     }
     /* 模态框 */
     .modal-backdrop {
@@ -1716,7 +3659,6 @@ body {
   /* ── 打印样式 (PDF 导出) ─────────────────────────────────────── */
   @media print {
     /* 隐藏交互元素 */
-    .top-actions,
     .action-bar,
     .config-trigger,
     .symbol-tab-close,
@@ -1800,7 +3742,7 @@ body {
     @page {
       margin: 1.6cm 1.4cm 1.4cm;
       @top-left {
-        content: "分析师公报 · The Analyst's Dispatch";
+        content: "AI 议会 · The AI Council Gazette";
         font-family: 'Fraunces', serif;
         font-size: 9pt;
         color: #666;

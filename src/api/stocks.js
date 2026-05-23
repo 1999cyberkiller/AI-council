@@ -21,11 +21,6 @@ export function aShareSecid(code) {
   return `1.${c}`;
 }
 
-function extractCnSixDigitCode(input) {
-  const match = input.match(/(?:^|[^\d])(\d{6})(?:[^\d]|$)/);
-  return match ? match[1] : '';
-}
-
 /**
  * 给定原始输入，若我们能在不发请求的情况下推断 { market, code }，则返回；否则 null
  * 用于"投机式提前启动"：当输入是 6 位数字或 US 代码时，无需等 resolveStock 完成就可以预先发起 K 线/基准请求
@@ -57,8 +52,6 @@ async function searchEastmoney(query) {
         code: x.code || x.Code || '',
         name: x.name || x.Name || '',
         market: String(x.market ?? x.MktNum ?? ''),
-        secid: x.QuoteID || '',
-        type: x.SecurityTypeName || x.Classify || '',
       }));
     },
     async () => {
@@ -70,8 +63,6 @@ async function searchEastmoney(query) {
         code: x.Code || '',
         name: x.Name || '',
         market: String(x.MktNum ?? ''),
-        secid: x.QuoteID || '',
-        type: x.SecurityTypeName || x.Classify || '',
       }));
     },
     async () => {
@@ -83,8 +74,6 @@ async function searchEastmoney(query) {
         code: x.Code || x.code || '',
         name: x.Name || x.name || '',
         market: String(x.MktNum ?? x.market ?? ''),
-        secid: x.QuoteID || '',
-        type: x.SecurityTypeName || x.Classify || '',
       }));
     },
   ];
@@ -97,25 +86,20 @@ async function searchEastmoney(query) {
       const isAMarket = (m) => m === '0' || m === '1' || m === '105' || m === '106';
 
       const exact = list.find((x) => x.name === query && isAShareCode(x.code) && isAMarket(x.market));
-      if (exact) return { code: exact.code, name: exact.name, secid: exact.secid, type: exact.type };
+      if (exact) return { code: exact.code, name: exact.name };
 
       const partial = list.find((x) => isAShareCode(x.code) && isAMarket(x.market) && x.name.includes(query));
-      if (partial) return { code: partial.code, name: partial.name, secid: partial.secid, type: partial.type };
+      if (partial) return { code: partial.code, name: partial.name };
 
       const anyAShare = list.find((x) => isAShareCode(x.code));
-      if (anyAShare) return { code: anyAShare.code, name: anyAShare.name, secid: anyAShare.secid, type: anyAShare.type };
+      if (anyAShare) return { code: anyAShare.code, name: anyAShare.name };
     } catch { continue; }
   }
   return null;
 }
 
-function inferCnInstrumentType(code, meta = {}) {
-  if ((meta.type || '').includes('指数') || /^399/.test(code)) return 'A 股指数';
-  return 'A 股';
-}
-
 // ── A 股行情 ──
-async function fetchAStockData(secid, meta = {}) {
+async function fetchAStockData(secid) {
   const fields = 'f43,f44,f45,f46,f47,f48,f50,f57,f58,f60,f161,f162,f167,f168,f169,f170,f171,f172,f173,f174,f175';
   const url = `https://push2.eastmoney.com/api/qt/stock/get?secid=${secid}&fields=${fields}`;
   const r = await fetchEastmoney(url);
@@ -126,10 +110,8 @@ async function fetchAStockData(secid, meta = {}) {
 
   return {
     market: 'A',
-    secid: meta.secid || secid,
     code: d.data.f57,
     name: d.data.f58,
-    instrumentType: inferCnInstrumentType(d.data.f57, meta),
     price: div100(d.data.f43),
     open: div100(d.data.f46),
     high: div100(d.data.f44),
@@ -195,12 +177,6 @@ async function fetchUSStockData(symbol, alphaKey) {
 async function resolveStockUncached(input, alphaKey) {
   const kind = classifyTicker(input);
   const trimmed = input.trim();
-  const embeddedCnCode = extractCnSixDigitCode(trimmed);
-
-  if (embeddedCnCode && /[\u4e00-\u9fa5]/.test(trimmed)) {
-    const foundByCode = await searchEastmoney(embeddedCnCode);
-    return fetchAStockData(foundByCode?.secid || aShareSecid(embeddedCnCode), foundByCode || {});
-  }
 
   if (kind === 'a-numeric') {
     return fetchAStockData(aShareSecid(trimmed));
@@ -217,13 +193,13 @@ async function resolveStockUncached(input, alphaKey) {
     const found = await searchEastmoney(trimmed);
     if (!found) {
       throw new Error(
-        `未找到「${trimmed}」对应的 A 股代码或指数代码。可尝试：①直接输入 6 位代码（如 002448、399967）；②确认名称是否准确；③检查浏览器 Network 选项卡看真实错误。`
+        `未找到「${trimmed}」对应的 A 股代码。可尝试：①直接输入 6 位代码（如 002448）；②确认名称是否准确；③检查浏览器 Network 选项卡看真实错误。`
       );
     }
-    return fetchAStockData(found.secid || aShareSecid(found.code), found);
+    return fetchAStockData(aShareSecid(found.code));
   }
   const found = await searchEastmoney(trimmed);
-  if (found) return fetchAStockData(found.secid || aShareSecid(found.code), found);
+  if (found) return fetchAStockData(aShareSecid(found.code));
   return fetchUSStockData(trimmed, alphaKey);
 }
 
@@ -257,7 +233,6 @@ async function fetchAStockKline(secid, days = 100) {
   const r = await fetchEastmoney(url);
   const d = await r.json();
   const klines = d?.data?.klines || [];
-  if (!klines.length) throw new Error(d?.message || `未取到 K 线数据（${secid}）`);
   return klines.map((line) => {
     const [date, open, close, high, low, volume] = line.split(',');
     return {
@@ -268,13 +243,7 @@ async function fetchAStockKline(secid, days = 100) {
       low: parseFloat(low),
       volume: parseFloat(volume),
     };
-  }).filter((row) =>
-    row.date &&
-    Number.isFinite(row.open) &&
-    Number.isFinite(row.close) &&
-    Number.isFinite(row.high) &&
-    Number.isFinite(row.low)
-  );
+  });
 }
 
 async function fetchUSKline(symbol, alphaKey, days = 100) {
@@ -323,38 +292,34 @@ async function resolveKlineUncached(market, code, alphaKey, days) {
   return enrichKline(raw).slice(-days);
 }
 
-async function resolveKlineUncachedForStock(stockData, alphaKey, days) {
-  const fetchDays = Math.min(Math.max(days + 60, 100), 500);
-  let raw;
-  if (stockData.market === 'A') {
-    raw = await fetchAStockKline(stockData.secid || aShareSecid(stockData.code), fetchDays);
-  } else {
-    raw = await fetchUSKline(stockData.code, alphaKey, fetchDays);
-  }
-  return enrichKline(raw).slice(-days);
-}
-
 // 接受 days 参数（30/90/180/365）—— 缓存版
 export async function resolveKline(stockData, alphaKey, days = 90, opts = {}) {
-  const keyCode = stockData.market === 'A'
-    ? (stockData.secid || stockData.code)
-    : stockData.code;
-  const { value } = await withCache(
-    klineKey(stockData.market, keyCode, days),
-    () => resolveKlineUncachedForStock(stockData, alphaKey, days),
-    { bypass: !!opts.bypassCache }
-  );
-  return value;
+  try {
+    const { value } = await withCache(
+      klineKey(stockData.market, stockData.code, days),
+      () => resolveKlineUncached(stockData.market, stockData.code, alphaKey, days),
+      { bypass: !!opts.bypassCache }
+    );
+    return value;
+  } catch (e) {
+    console.warn('K线获取失败:', e.message);
+    return null;
+  }
 }
 
 // 投机式 K 线：只需 market + code 就能调用（用于 resolveStock 还没完成前提前发起）
 export async function resolveKlineByCode(market, code, alphaKey, days = 90, opts = {}) {
-  const { value } = await withCache(
-    klineKey(market, code, days),
-    () => resolveKlineUncached(market, code, alphaKey, days),
-    { bypass: !!opts.bypassCache }
-  );
-  return value;
+  try {
+    const { value } = await withCache(
+      klineKey(market, code, days),
+      () => resolveKlineUncached(market, code, alphaKey, days),
+      { bypass: !!opts.bypassCache }
+    );
+    return value;
+  } catch (e) {
+    console.warn('K线获取失败:', e.message);
+    return null;
+  }
 }
 
 /* ──────────────────────────────────────────────────────────────────
@@ -415,7 +380,7 @@ export async function fetchBenchmarkSpot(market, alphaKey, opts = {}) {
 export async function fetchPriceAtDate(market, code, alphaKey, targetDateMs, lookback = 60) {
   let rows;
   if (market === 'A') {
-    rows = await fetchAStockKline(String(code).includes('.') ? code : aShareSecid(code), lookback);
+    rows = await fetchAStockKline(aShareSecid(code), lookback);
   } else {
     rows = await fetchUSKline(code, alphaKey, lookback);
   }

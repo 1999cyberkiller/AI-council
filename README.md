@@ -1,18 +1,24 @@
-# 分析师公报 · The Analyst's Dispatch
+# AI 议会 · The AI Council Gazette
 
 四模型并行投资分析平台 · 集成 A 股 + 美股行情 · 主编综评 · K 线图 · 历史档案
 
 ## 功能
 
 - **四位分析师并行撰稿**：价值派 / 技术派 / 宏观派 / 风险派，各由不同 LLM 担任
-- **主编综评**：第五个 LLM 综合四篇专栏，给出共识 / 分歧 / 最终裁决
+- **主编综评**：第五个 LLM 综合四篇专栏，给出共识 / 分歧 / 最终裁决 / **对四位分析师打分（A/B/C/D）**
 - **行情数据**：A 股（东方财富，无 key）+ 美股（Alpha Vantage）
-- **K 线图**：技术派栏目内嵌 90 日蜡烛图 + MA20/MA60，鼠标悬停查看 OHLC
+- **K 线图**：技术派栏目内嵌 90 日蜡烛图 + MA20/MA60，鼠标/触屏悬停查看 OHLC 详情
+- **多标的对比**：Tab 切换最近分析过的多只股票，结果都保留在内存
+- **自选股 ★**：常关注的标的一键收藏，下次直接调用
 - **历史档案**：自动归档每次分析，可回看任意一次（最多 50 条）
+- **PDF 导出**：一键打印为 PDF（自动隐藏 UI、强制亮色）
+- **暗色模式 ☾**：日光 / 夜读两套配色
 - **自动重试**：API 失败自动重试 + 手动重试按钮
 - **模型变体**：每个内置模型可在多个具体型号间切换（DeepSeek-Chat/Reasoner、Gemini Flash/Pro 等）
-- **持久化配置**：API key、模型选择、变体、分配自动保存到浏览器 localStorage
+- **持久化配置**：API key、模型选择、变体、分配、自选股、主题自动保存到浏览器 localStorage
+- **手机端适配**：所有面板、K 线图、tabs 在窄屏自动重排
 - **Basic Auth**：默认开启，避免公网随便访问
+- **代理层防护**：模型代理带请求体上限、安全响应头、可选 API token 和内存限流
 
 ## 项目结构
 
@@ -49,7 +55,7 @@ analysts-dispatch/
 cd /path/to/analysts-dispatch
 git init
 git add .
-git commit -m "Initial commit: 分析师公报 v1.0"
+git commit -m "Initial commit: AI 议会 v1.0"
 git branch -M main
 git remote add origin https://github.com/YOUR_USERNAME/analysts-dispatch.git
 git push -u origin main
@@ -201,7 +207,24 @@ bash deploy.sh
 
 ---
 
-## 六、修改端口
+## 六、模型代理安全配置
+
+生产环境默认已有 Basic Auth。模型代理还支持这些可选环境变量：
+
+```bash
+DISPATCH_API_TOKEN=your_token              # 设置后 /api/model/* 需要 X-Api-Token
+DISPATCH_MAX_BODY_BYTES=1048576            # 默认 1MB，避免过小误伤长提示词
+DISPATCH_MODEL_RATE_LIMIT_MAX=120          # 单 IP 每分钟模型请求上限
+DISPATCH_MARKET_RATE_LIMIT_MAX=240         # 单 IP 每分钟行情代理请求上限
+DISPATCH_MODEL_TIMEOUT_MS=300000           # 模型代理超时
+DISPATCH_MARKET_TIMEOUT_MS=12000           # 行情代理超时
+```
+
+`/api/health` 会返回代理运行时间、限流配置和 token 是否启用。
+
+---
+
+## 七、修改端口
 
 ```bash
 export PORT=80
@@ -218,20 +241,89 @@ nginx -t && systemctl reload nginx
 
 ---
 
-## 七、安全提醒
+## 八、安全模型与威胁模型
 
-⚠️ 即使开了 Basic Auth，仍要注意：
+### 当前架构的安全边界
 
-- **API key 存浏览器 localStorage** — 同一台电脑同一个浏览器，所有进入应用的人都能看到对方的 key
-- **建议每个使用者用自己的 Basic Auth 账号** + 自己的 API key
-- **不要在公共电脑（网吧/共享办公位）上输入生产环境 key**
-- **API key 价值低的优先**（NVIDIA NIM 免费，DeepSeek 几分钱一次）
+```
+[公网] → [Basic Auth 拦截] → [Nginx 静态站点] → [浏览器执行 React]
+                                                       ↓
+                                              [localStorage 存 API key]
+                                                       ↓
+                                         [VPS 同源模型代理 /api/model/*]
+                                                       ↓
+                                            [LLM / 行情 HTTPS API]
+```
 
-如果想彻底隔离 key（让 key 永不出 VPS），需要改造成后端代理模式 — 这是个比较大的改动，需要的话可以单独提需求。
+**关键事实：API key 长期保存在用户浏览器 localStorage，不写入 VPS 磁盘或仓库**。模型请求会经过 VPS 同源代理转发，所以代理服务必须只绑定 `127.0.0.1` 并放在 Nginx Basic Auth 后面。
+
+✓ key 不落盘，不进入服务端配置文件
+✓ 代理错误会自动脱敏，避免把 key 片段打到前端
+✓ 自定义模型端点禁止内网地址，降低 SSRF 风险
+✗ 但**同一台电脑同一个浏览器**的所有访问者**共享**同一份 localStorage
+✗ VPS 代理进程转发请求时会短暂接触 key，所以 VPS 本身仍要当作敏感服务保护
+
+### 适合的使用场景
+
+✅ **个人自用** — 自己电脑、自己浏览器、自己的 key，没问题
+✅ **小团队，每人一套设备** — 每个成员用自己的笔记本访问，各管各的 key
+✅ **临时演示** — 演示完手动 ⚙ → 清除凭据
+
+### **不适合**的使用场景
+
+❌ **公共电脑/共享设备** — 网吧、共享办公位的浏览器，key 留在 localStorage，下一个登录的人能用
+❌ **团队共享一个 Basic Auth 账号** — 你以为你给同事的是登录密码，其实顺带把所有人的 key 都共享给他了
+❌ **生产/付费 API key** — 高价值的 OpenAI/Anthropic 付费 key，万一被薅最少损失几百块
+
+### 推荐的多人使用方式
+
+如果团队多人要用：
+
+**方案 A（推荐，几乎零成本）**：
+1. 每人用**自己的浏览器配置**（Chrome 配置文件 / 浏览器隐私窗口）
+2. 每人用**自己申请的 API key**
+3. Basic Auth 给每人配独立账号（`htpasswd` 加用户）
+4. 严禁在他人电脑上勾选保存 key
+
+**方案 B（最稳，工作量大）**：
+改造成**服务端托管 key 模式** — 这需要：
+- 把模型 key 写入 VPS 环境变量或密钥管理器
+- 前端只传角色和任务，不再传任何 key
+- 后端按角色注入真实 key，并记录最小审计日志
+- 前端 localStorage 不再保存模型 key
+
+如果要长期作为团队工具用，建议做。否则用方案 A 即可。
+
+### 实操：清除残留 key
+
+任何人离开你的电脑前都应该：
+
+打开应用 → ⚙ 配置 → 滚到底部 → **清除所有凭据**
+
+或者直接在浏览器 DevTools 控制台跑：
+
+```js
+localStorage.removeItem('dispatch:config:v1');
+localStorage.removeItem('dispatch:history:v1');
+localStorage.removeItem('dispatch:watchlist:v1');
+localStorage.removeItem('dispatch:tabs:v1');
+localStorage.removeItem('dispatch:events:v1');
+```
+
+### 网络传输层
+
+浏览器到 VPS 默认是 HTTP。VPS 到 DeepSeek / Gemini / Grok / NVIDIA NIM 等外部 API 是 HTTPS。如果给 VPS 配了域名，建议加 Let's Encrypt 证书：
+
+```bash
+apt install certbot python3-certbot-nginx
+certbot --nginx -d your-domain.com
+```
+
+否则 Basic Auth 密码会以明文走网络，能被中间人抓到。
 
 ---
 
-## 八、本地开发
+## 九、本地开发
 
 ```bash
 npm install
@@ -242,7 +334,7 @@ npm run dev    # http://localhost:5173
 
 ---
 
-## 九、故障排查
+## 十、故障排查
 
 | 现象 | 排查 |
 |---|---|

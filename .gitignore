@@ -1,8 +1,9 @@
 node_modules
 node_modules.failed-install
-.npm-cache
 dist
 dist-ssr
+.codex-backups
+.npm-cache
 *.local
 .DS_Store
 .vscode/*

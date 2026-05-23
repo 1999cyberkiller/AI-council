@@ -6,7 +6,7 @@ import React, { useRef } from 'react';
 import { useEscToClose, useFocusTrap } from '../hooks';
 import { HISTORY_MAX } from '../lib/storage';
 
-export const HistoryPanel = ({ expanded, onToggle, history, onLoad, onDelete, onClearAll }) => {
+export const HistoryPanel = ({ expanded, onToggle, history, onLoad, onDelete, onClearAll, onExport }) => {
   useEscToClose(expanded, onToggle);
   const containerRef = useRef(null);
   useFocusTrap(expanded, containerRef);
@@ -163,6 +163,21 @@ export const HistoryPanel = ({ expanded, onToggle, history, onLoad, onDelete, on
                           查阅
                         </button>
                         <button
+                          onClick={() => onExport && onExport(entry.id)}
+                          style={{
+                            background: 'transparent',
+                            color: 'var(--ink-soft)',
+                            border: '1px solid var(--ink-soft)',
+                            padding: '5px 10px',
+                            fontFamily: "'Courier Prime', 'Noto Sans SC', monospace",
+                            fontSize: '0.7rem',
+                            letterSpacing: '0.08em',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          导出
+                        </button>
+                        <button
                           onClick={() => onDelete(entry.id)}
                           style={{
                             background: 'transparent',
@@ -189,4 +204,3 @@ export const HistoryPanel = ({ expanded, onToggle, history, onLoad, onDelete, on
     </div>
   );
 };
-

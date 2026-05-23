@@ -31,7 +31,102 @@ function gapsSimilar(a, b) {
   return false;
 }
 
-export const DataGapPanel = ({ analyses, editorState }) => {
+const SOURCE_STATUS = {
+  pending: { text: '等待中', className: 'data-gap-pill--pending' },
+  ok: { text: '已就绪', className: 'data-gap-pill--ok' },
+  empty: { text: '暂无数据', className: 'data-gap-pill--empty' },
+  warning: { text: '缺口', className: 'data-gap-pill--warning' },
+  error: { text: '失败', className: 'data-gap-pill--error' },
+};
+
+function fmtTime(ts) {
+  if (!ts) return '';
+  try {
+    return new Date(ts).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return '';
+  }
+}
+
+function SourceDataGaps({ dataHealth, compact = false }) {
+  const items = Object.entries(dataHealth || {}).map(([id, item]) => ({
+    id,
+    ...item,
+    status: item?.status || 'pending',
+  }));
+
+  if (items.length === 0) return null;
+
+  const gaps = items.filter((item) => ['empty', 'warning', 'error'].includes(item.status));
+
+  return (
+    <section className={`data-gap-panel data-gap-panel--source fade-up${compact ? ' data-gap-panel--compact' : ''}`}>
+      <div className="data-gap-header">
+        <div
+          className="mono small-caps"
+          style={{
+            fontSize: '0.7rem',
+            letterSpacing: '0.28em',
+            color: 'var(--accent-soft)',
+          }}
+        >
+          ◆ DATA HEALTH · 数 据 缺 口 ◆
+        </div>
+        <div
+          className="body-serif"
+          style={{
+            fontSize: '0.78rem',
+            color: 'var(--ink-soft)',
+            fontStyle: 'italic',
+            marginTop: 4,
+          }}
+        >
+          行情、K 线、财务、共识、新闻各自独立记录。失败不会拖死整篇公报。
+        </div>
+      </div>
+
+      <div className="data-gap-source-grid">
+        {items.map((item) => {
+          const meta = SOURCE_STATUS[item.status] || SOURCE_STATUS.pending;
+          return (
+            <div className="data-gap-source-card" key={item.id}>
+              <div className="data-gap-source-top">
+                <span className="display-serif" style={{ fontWeight: 700 }}>{item.label}</span>
+                <span className={`data-gap-pill ${meta.className}`}>{meta.text}</span>
+              </div>
+              <div className="mono data-gap-source-detail">
+                {item.source ? `${item.source} · ` : ''}
+                {fmtTime(item.fetchedAt) ? `${fmtTime(item.fetchedAt)} · ` : ''}
+                {item.detail || (item.status === 'ok' ? '数据可用' : '等待返回')}
+                {typeof item.count === 'number' ? ` · ${item.count} 条` : ''}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {gaps.length > 0 && (
+        <div className="data-gap-body data-gap-body--source">
+          <div className="data-gap-block">
+            <div className="data-gap-source">
+              <span className="cd-chip cd-chip--neutral">当前缺口</span>
+            </div>
+            <ul className="data-gap-list">
+              {gaps.map((item) => (
+                <li key={item.id}>
+                  <span style={{ color: 'var(--accent-soft)', marginRight: 6 }}>▸</span>
+                  {item.label}：{item.detail || '本次未取得有效数据'}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+export const DataGapPanel = ({ analyses, editorState, dataHealth, compact = false }) => {
   // 客户端聚合：按共同子串聚类，统计每条缺口被几位提到
   const clusteredGaps = useMemo(() => {
     const clusters = []; // [{ text, by: Set<string> }]
@@ -72,7 +167,9 @@ export const DataGapPanel = ({ analyses, editorState }) => {
       ))
     : clusteredGaps;
 
-  if (editorGapsValid.length === 0 && clientGaps.length === 0) return null;
+  if (editorGapsValid.length === 0 && clientGaps.length === 0) {
+    return dataHealth ? <SourceDataGaps dataHealth={dataHealth} compact={compact} /> : null;
+  }
 
   return (
     <section className="data-gap-panel fade-up">

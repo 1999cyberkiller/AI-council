@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ========================================================================
-# 分析师公报 · VPS 部署脚本 (with Basic Auth)
+# AI 议会 · VPS 部署脚本 (with Basic Auth)
 # 用法: bash deploy.sh
 # 环境: Linux (Ubuntu/Debian/CentOS) · 需要 root 或 sudo
 # ========================================================================

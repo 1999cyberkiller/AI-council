@@ -6,6 +6,7 @@
    ────────────────────────────────────────────────────────────────── */
 
 import React from 'react';
+import { renderWithMentions } from './StockMention';
 import { ANALYSTS_COUNT, ROOT_CAUSE_CN } from '../lib/constants';
 
 // 历史档案兼容层：旧 V5 数据可能是字符串数组形态
@@ -32,7 +33,7 @@ function coerceDissentItem(item) {
   return null;
 }
 
-export const EditorSection = ({ state, model, voteStats, onRetry }) => {
+export const EditorSection = ({ state, model, voteStats, onRetry, analystProgress, mentionDict, currentCode, onSummonStock }) => {
   const isPending = !state || state.status === 'pending';
   const isDone = state?.status === 'done';
   const isError = state?.status === 'error';
@@ -41,6 +42,9 @@ export const EditorSection = ({ state, model, voteStats, onRetry }) => {
   const verdictColor = (v) =>
     v === 'BUY' ? 'var(--buy-light)' : v === 'SELL' ? 'var(--sell-light)' : 'var(--hold-light)';
   const verdictCN = (v) => (v === 'BUY' ? '买入' : v === 'SELL' ? '卖出' : '持有');
+
+  // Item 2: progress visualization helper
+  const progress = analystProgress || { done: 0, total: 4, doneAnalysts: [], pendingAnalysts: [], failedAnalysts: [] };
 
   return (
     <section className="editor-section fade-up">
@@ -114,6 +118,35 @@ export const EditorSection = ({ state, model, voteStats, onRetry }) => {
         {/* Loading */}
         {isPending && (
           <div style={{ padding: '20px 0' }}>
+            {/* 议会进度可视化 — V17 */}
+            <div className="editor-progress">
+              <div className="editor-progress-bar">
+                <div
+                  className="editor-progress-fill"
+                  style={{ width: `${(progress.done / progress.total) * 100}%` }}
+                />
+              </div>
+              <div className="editor-progress-meta">
+                <span>
+                  已交稿 <strong>{progress.done}</strong> / {progress.total}
+                </span>
+                {progress.doneAnalysts.length > 0 && (
+                  <span className="editor-progress-chips">
+                    {progress.doneAnalysts.map((name) => (
+                      <span key={name} className="editor-progress-chip editor-progress-chip--done">
+                        ✓ {name}
+                      </span>
+                    ))}
+                    {progress.failedAnalysts.map((name) => (
+                      <span key={name} className="editor-progress-chip editor-progress-chip--failed">
+                        ✕ {name}
+                      </span>
+                    ))}
+                  </span>
+                )}
+              </div>
+            </div>
+
             <div
               className="mono"
               style={{
@@ -121,11 +154,16 @@ export const EditorSection = ({ state, model, voteStats, onRetry }) => {
                 color: 'var(--paper-dark)',
                 letterSpacing: '0.08em',
                 lineHeight: 2,
+                marginTop: 18,
               }}
             >
               <div>▸ 审阅四位作者本期专栏</div>
               <div>▸ 抽离共识与分歧</div>
-              <div className="blink-cursor">▸ 落笔札记</div>
+              <div className="blink-cursor">
+                {progress.done < progress.total
+                  ? `▸ 等 ${progress.total - progress.done} 位交稿…`
+                  : '▸ 落笔札记'}
+              </div>
             </div>
           </div>
         )}
@@ -195,19 +233,31 @@ export const EditorSection = ({ state, model, voteStats, onRetry }) => {
               {data.headline}
             </h3>
 
+            {/* Key sentence pullquote — 整篇核心，单独提炼 */}
+            {data.key_sentence && (
+              <div className="editor-keysent">
+                <span className="editor-keysent-bar" aria-hidden="true" />
+                <div className="editor-keysent-text">{data.key_sentence}</div>
+              </div>
+            )}
+
             {/* Review body with drop cap */}
             <div
-              className="editor-dropcap body-serif"
+              className="editor-dropcap body-serif body-serif-indent"
               style={{
                 fontSize: '1.02rem',
-                lineHeight: 1.7,
+                lineHeight: 1.72,
                 color: 'var(--paper)',
                 textAlign: 'justify',
                 marginBottom: 22,
                 opacity: 0.96,
               }}
             >
-              {data.review}
+              {data.review.split(/\n+/).filter((p) => p.trim()).map((p, i) => (
+                <p key={i} style={{ margin: i === 0 ? '0 0 0.85em 0' : '0.85em 0 0.85em 0' }}>
+                  {mentionDict ? renderWithMentions(p, mentionDict, currentCode, onSummonStock) : p}
+                </p>
+              ))}
             </div>
 
             {/* Empty fallback — neither consensus nor dissent populated */}

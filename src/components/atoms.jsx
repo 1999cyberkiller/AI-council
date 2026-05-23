@@ -102,8 +102,13 @@ export const TickerTape = ({ stockData }) => {
 };
 
 // Error display with collapsible raw preview
-export const WireFeedError = ({ errorMsg, rawPreview, onRetry }) => {
+export const WireFeedError = ({ errorMsg, rawPreview, onRetry, availableModels, currentModelId, onRetryWithModel }) => {
   const [showRaw, setShowRaw] = useState(false);
+  const [showModelMenu, setShowModelMenu] = useState(false);
+
+  // Available alternate models (exclude current one)
+  const alternates = (availableModels || []).filter((m) => m.id !== currentModelId);
+
   return (
     <div className="wire-feed">
       <div className="wire-line error">
@@ -126,8 +131,8 @@ export const WireFeedError = ({ errorMsg, rawPreview, onRetry }) => {
           {showRaw && <pre style={STY_ERR_RAW}>{rawPreview}</pre>}
         </div>
       )}
-      {onRetry && (
-        <div style={{ marginTop: 12, paddingLeft: 24 }}>
+      <div style={{ marginTop: 12, paddingLeft: 24, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        {onRetry && (
           <button
             onClick={onRetry}
             style={STY_RETRY_BTN_BASE}
@@ -140,15 +145,51 @@ export const WireFeedError = ({ errorMsg, rawPreview, onRetry }) => {
               e.currentTarget.style.color = 'var(--accent)';
             }}
           >
-            ↻ 重新撰稿 · Retry
+            ↻ 重新撰稿
           </button>
-        </div>
-      )}
+        )}
+        {onRetryWithModel && alternates.length > 0 && (
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setShowModelMenu((s) => !s)}
+              style={STY_RETRY_BTN_BASE}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--ink)';
+                e.currentTarget.style.color = 'var(--paper)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = 'var(--accent)';
+              }}
+              aria-haspopup="true"
+              aria-expanded={showModelMenu}
+            >
+              换模型重试 ▾
+            </button>
+            {showModelMenu && (
+              <div className="retry-model-menu">
+                {alternates.map((m) => (
+                  <button
+                    key={m.id}
+                    className="retry-model-menu-item"
+                    onClick={() => {
+                      setShowModelMenu(false);
+                      onRetryWithModel(m.id);
+                    }}
+                  >
+                    {m.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
 
-export const WireFeed = ({ analyst, modelName, isLoading, isError, errorMsg, rawPreview, onRetry }) => {
+export const WireFeed = ({ analyst, modelName, isLoading, isError, errorMsg, rawPreview, onRetry, availableModels, currentModelId, onRetryWithModel }) => {
   const [completed, setCompleted] = useState(0);
 
   useEffect(() => {
@@ -177,7 +218,14 @@ export const WireFeed = ({ analyst, modelName, isLoading, isError, errorMsg, raw
   ];
 
   if (isError) {
-    return <WireFeedError errorMsg={errorMsg} rawPreview={rawPreview} onRetry={onRetry} />;
+    return <WireFeedError
+      errorMsg={errorMsg}
+      rawPreview={rawPreview}
+      onRetry={onRetry}
+      availableModels={availableModels}
+      currentModelId={currentModelId}
+      onRetryWithModel={onRetryWithModel}
+    />;
   }
 
   return (

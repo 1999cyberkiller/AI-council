@@ -17,15 +17,21 @@ function extractJson(rawText) {
     if (!s) return null;
     try { return JSON.parse(s); } catch { return null; }
   };
+  const repairJsonText = (s) => String(s || '')
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .replace(/,\s*([}\]])/g, '$1')
+    .trim();
+  const tryParseLoose = (s) => tryParse(s) || tryParse(repairJsonText(s));
 
   // 策略 1: 整段是合法 JSON
-  let parsed = tryParse(cleanText);
+  let parsed = tryParseLoose(cleanText);
   if (parsed) return parsed;
 
   // 策略 2: 去掉 markdown 代码块
   const codeBlockMatch = cleanText.match(/```(?:json)?\s*([\s\S]*?)```/i);
   if (codeBlockMatch) {
-    parsed = tryParse(codeBlockMatch[1].trim());
+    parsed = tryParseLoose(codeBlockMatch[1].trim());
     if (parsed) return parsed;
   }
 
@@ -34,7 +40,7 @@ function extractJson(rawText) {
   const start = stripped.indexOf('{');
   const end = stripped.lastIndexOf('}');
   if (start !== -1 && end !== -1 && end > start) {
-    parsed = tryParse(stripped.slice(start, end + 1));
+    parsed = tryParseLoose(stripped.slice(start, end + 1));
     if (parsed) return parsed;
   }
 
@@ -47,7 +53,7 @@ function extractJson(rawText) {
     } else if (stripped[i] === '}') {
       depth--;
       if (depth === 0 && startIdx !== -1) {
-        const candidate = tryParse(stripped.slice(startIdx, i + 1));
+        const candidate = tryParseLoose(stripped.slice(startIdx, i + 1));
         if (candidate) return candidate;
         startIdx = -1;
       }
@@ -158,6 +164,9 @@ export function parseEditorResponse(rawText) {
   if (!['BUY', 'HOLD', 'SELL'].includes(parsed.verdict)) parsed.verdict = 'HOLD';
   parsed.conviction = Math.max(1, Math.min(5, parseInt(parsed.conviction) || 3));
   parsed.headline = parsed.headline || '主编观点待定';
+  parsed.key_sentence = (typeof parsed.key_sentence === 'string' && parsed.key_sentence.trim())
+    ? parsed.key_sentence.trim()
+    : '';   // 空表示模型没提供（V16 之前的旧 entry 兼容）
   parsed.review = parsed.review || '札记缺失';
 
   // 新结构：对象数组；旧结构：字符串数组——都接住
@@ -196,4 +205,75 @@ export function cleanTickerInput(raw) {
     ''
   );
   return s.trim();
+}
+
+/* ──────────────────────────────────────────────────────────────
+   SECOND ROUND PARSERS · 二次审稿响应解析
+   ────────────────────────────────────────────────────────────── */
+
+export function parseRebuttalResponse(rawText) {
+  if (!rawText || typeof rawText !== 'string') {
+    throw new Error('模型返回为空');
+  }
+  const parsed = extractJson(rawText);
+  if (!parsed) throw makeParseError(rawText);
+
+  return {
+    rebuttal: typeof parsed.rebuttal === 'string' && parsed.rebuttal.trim()
+      ? parsed.rebuttal.trim()
+      : '回应内容缺失',
+    refined_verdict: ['BUY', 'HOLD', 'SELL'].includes(parsed.refined_verdict)
+      ? parsed.refined_verdict
+      : 'HOLD',
+    refined_conviction: Math.max(1, Math.min(5, parseInt(parsed.refined_conviction) || 3)),
+  };
+}
+
+export function parseSecondRoundEditor(rawText) {
+  if (!rawText || typeof rawText !== 'string') {
+    throw new Error('模型返回为空');
+  }
+  const parsed = extractJson(rawText);
+  if (!parsed) throw makeParseError(rawText);
+
+  return {
+    headline: typeof parsed.headline === 'string' && parsed.headline.trim()
+      ? parsed.headline.trim()
+      : '二次审稿结论待定',
+    synthesis: typeof parsed.synthesis === 'string' && parsed.synthesis.trim()
+      ? parsed.synthesis.trim()
+      : (typeof parsed.review === 'string' ? parsed.review.trim() : '综合内容缺失'),
+    verdict: ['BUY', 'HOLD', 'SELL'].includes(parsed.verdict) ? parsed.verdict : 'HOLD',
+    conviction: Math.max(1, Math.min(5, parseInt(parsed.conviction) || 3)),
+    shifted: parsed.shifted === true,
+    shift_reason: typeof parsed.shift_reason === 'string' ? parsed.shift_reason.trim() : '',
+  };
+}
+
+/* ── V19 Free Ask parsers ─────────────────────────────────── */
+function extractJsonOrThrow(rawText) {
+  if (!rawText || typeof rawText !== 'string') throw new Error('模型返回为空');
+  const parsed = extractJson(rawText);
+  if (!parsed) throw makeParseError(rawText);
+  return parsed;
+}
+
+export function parseFreeAskResponse(rawText) {
+  const parsed = extractJsonOrThrow(rawText);
+  return {
+    answer: typeof parsed.answer === 'string' && parsed.answer.trim()
+      ? parsed.answer.trim() : '回答内容缺失',
+    stance_shift: ['BUY', 'HOLD', 'SELL', 'unchanged'].includes(parsed.stance_shift)
+      ? parsed.stance_shift : 'unchanged',
+    confidence: Math.max(1, Math.min(5, parseInt(parsed.confidence) || 3)),
+  };
+}
+
+export function parseFreeAskEditor(rawText) {
+  const parsed = extractJsonOrThrow(rawText);
+  return {
+    synthesis: typeof parsed.synthesis === 'string' && parsed.synthesis.trim()
+      ? parsed.synthesis.trim() : '主编综合缺失',
+    consensus: typeof parsed.consensus === 'string' ? parsed.consensus.trim() : '',
+  };
 }

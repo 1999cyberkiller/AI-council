@@ -1,20 +1,37 @@
 import http from 'node:http';
+import crypto from 'node:crypto';
 
 const PORT = Number(process.env.DISPATCH_PROXY_PORT || 8787);
 const HOST = process.env.DISPATCH_PROXY_HOST || '127.0.0.1';
-const MAX_BODY_BYTES = 1024 * 1024;
-const MODEL_TIMEOUT_MS = Number(process.env.DISPATCH_MODEL_TIMEOUT_MS || 180000);
+const MAX_BODY_BYTES = Number(process.env.DISPATCH_MAX_BODY_BYTES || 1024 * 1024);
+const MODEL_TIMEOUT_MS = Number(process.env.DISPATCH_MODEL_TIMEOUT_MS || 300000);
 const MARKET_TIMEOUT_MS = Number(process.env.DISPATCH_MARKET_TIMEOUT_MS || 12000);
+const API_TOKEN = process.env.DISPATCH_API_TOKEN || process.env.API_TOKEN || '';
+const RATE_LIMIT_WINDOW_MS = Number(process.env.DISPATCH_RATE_LIMIT_WINDOW_MS || 60_000);
+const MODEL_RATE_LIMIT_MAX = Number(process.env.DISPATCH_MODEL_RATE_LIMIT_MAX || 120);
+const MARKET_RATE_LIMIT_MAX = Number(process.env.DISPATCH_MARKET_RATE_LIMIT_MAX || 240);
+const rateWindows = new Map();
 
 function sendJson(res, status, payload) {
   const body = JSON.stringify(payload);
   res.writeHead(status, {
     'Content-Type': 'application/json; charset=utf-8',
     'Content-Length': Buffer.byteLength(body),
-    'X-Dispatch-Proxy': '1',
-    'Cache-Control': 'no-store',
+    ...proxyHeaders(),
   });
   res.end(body);
+}
+
+function proxyHeaders(extra = {}) {
+  return {
+    'X-Dispatch-Proxy': '1',
+    'Cache-Control': 'no-store',
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'Referrer-Policy': 'no-referrer',
+    'Permissions-Policy': 'geolocation=(), camera=(), microphone=()',
+    ...extra,
+  };
 }
 
 function redact(text) {
@@ -26,29 +43,74 @@ function redact(text) {
     .replace(/[a-f0-9]{32}\.[A-Za-z0-9_-]{8,}/gi, 'zhipu-***');
 }
 
-function readBody(req) {
-  return new Promise((resolve, reject) => {
-    let size = 0;
-    const chunks = [];
-    req.on('data', (chunk) => {
-      size += chunk.length;
-      if (size > MAX_BODY_BYTES) {
-        reject(new Error('请求体过大'));
-        req.destroy();
-        return;
-      }
-      chunks.push(chunk);
-    });
-    req.on('end', () => {
-      try {
-        const raw = Buffer.concat(chunks).toString('utf8') || '{}';
-        resolve(JSON.parse(raw));
-      } catch {
-        reject(new Error('请求 JSON 解析失败'));
-      }
-    });
-    req.on('error', reject);
-  });
+async function readBody(req) {
+  let size = 0;
+  const chunks = [];
+  for await (const chunk of req) {
+    size += chunk.length;
+    if (size > MAX_BODY_BYTES) {
+      const error = new Error(`请求体过大，限制 ${MAX_BODY_BYTES} 字节`);
+      error.code = 'PAYLOAD_TOO_LARGE';
+      throw error;
+    }
+    chunks.push(chunk);
+  }
+  try {
+    const raw = Buffer.concat(chunks).toString('utf8') || '{}';
+    return JSON.parse(raw);
+  } catch {
+    const error = new Error('请求 JSON 解析失败');
+    error.code = 'BAD_JSON';
+    throw error;
+  }
+}
+
+function clientIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) return String(forwarded).split(',')[0].trim();
+  return req.socket?.remoteAddress || 'unknown';
+}
+
+function checkRateLimit(req, scope, maxHits) {
+  if (!Number.isFinite(maxHits) || maxHits <= 0) return { allowed: true };
+  const now = Date.now();
+  const key = `${scope}:${clientIp(req)}`;
+  const cutoff = now - RATE_LIMIT_WINDOW_MS;
+  const hits = (rateWindows.get(key) || []).filter((ts) => ts > cutoff);
+  if (hits.length >= maxHits) {
+    const retryAfter = Math.max(1, Math.ceil((RATE_LIMIT_WINDOW_MS - (now - hits[0])) / 1000));
+    return { allowed: false, retryAfter, limit: maxHits };
+  }
+  hits.push(now);
+  rateWindows.set(key, hits);
+  return { allowed: true, hits: hits.length, limit: maxHits };
+}
+
+function enforceRateLimit(req, res, scope, maxHits) {
+  const rate = checkRateLimit(req, scope, maxHits);
+  if (rate.allowed) return true;
+  res.writeHead(429, proxyHeaders({
+    'Content-Type': 'application/json; charset=utf-8',
+    'Retry-After': String(rate.retryAfter),
+  }));
+  res.end(JSON.stringify({
+    error: `请求过于频繁，${rate.retryAfter} 秒后重试。`,
+    limit: rate.limit,
+  }));
+  return false;
+}
+
+function requireApiToken(req) {
+  if (!API_TOKEN) return { ok: true, enforced: false };
+  const reqUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+  const presented = req.headers['x-api-token'] || req.headers['x-dispatch-api-token'] || reqUrl.searchParams.get('token') || '';
+  if (!presented) return { ok: false, reason: '缺少 X-Api-Token' };
+  const actual = Buffer.from(String(presented));
+  const expected = Buffer.from(String(API_TOKEN));
+  if (actual.length !== expected.length) return { ok: false, reason: 'token 不匹配' };
+  return crypto.timingSafeEqual(actual, expected)
+    ? { ok: true, enforced: true }
+    : { ok: false, reason: 'token 不匹配' };
 }
 
 function requireText(value, name) {
@@ -65,6 +127,38 @@ async function parseJsonOrText(response) {
   } catch {
     return { json: null, text };
   }
+}
+
+function normalizeMessageContent(content) {
+  if (typeof content === 'string') return content.trim();
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => {
+        if (typeof part === 'string') return part;
+        if (typeof part?.text === 'string') return part.text;
+        if (typeof part?.content === 'string') return part.content;
+        return '';
+      })
+      .join('\n')
+      .trim();
+  }
+  return '';
+}
+
+function extractChatContent(providerName, payload, rawText = '') {
+  const choice = payload?.choices?.[0];
+  if (!choice) {
+    throw new Error(`${providerName} 返回结构异常：${redact(rawText || JSON.stringify(payload)).slice(0, 240)}`);
+  }
+  const message = choice.message || {};
+  const content = normalizeMessageContent(message.content);
+  if (content) return content;
+
+  const reasoning = normalizeMessageContent(message.reasoning_content);
+  if (reasoning) {
+    throw new Error(`${providerName} 只返回了推理内容，最终正文为空；请调高输出长度或重试`);
+  }
+  throw new Error(`${providerName} 返回正文为空：${redact(rawText || JSON.stringify(payload)).slice(0, 240)}`);
 }
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = MODEL_TIMEOUT_MS) {
@@ -110,8 +204,14 @@ function assertPublicHttpsEndpoint(endpoint) {
   if (
     host === 'localhost' ||
     host === '127.0.0.1' ||
+    host === '0.0.0.0' ||
+    host === '::1' ||
+    host === '[::1]' ||
     host.startsWith('10.') ||
+    host.startsWith('127.') ||
+    host.startsWith('169.254.') ||
     host.startsWith('192.168.') ||
+    /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./.test(host) ||
     /^172\.(1[6-9]|2\d|3[0-1])\./.test(host)
   ) {
     throw new Error('自定义模型端点不允许指向内网地址');
@@ -119,40 +219,54 @@ function assertPublicHttpsEndpoint(endpoint) {
   return u.toString();
 }
 
-async function callOpenAIStyle({ providerName, url, apiKey, model, systemPrompt, userPrompt, maxTokens }) {
-  const response = await fetchWithRetry(url, {
+function openAIStyleBody({ model, systemPrompt, userPrompt, maxTokens, jsonMode = false }) {
+  const body = {
+    model,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ],
+    temperature: jsonMode ? 0.35 : 0.7,
+    max_tokens: maxTokens || 2000,
+  };
+  if (jsonMode) {
+    body.response_format = { type: 'json_object' };
+  }
+  return body;
+}
+
+async function postOpenAIStyle({ url, apiKey, model, systemPrompt, userPrompt, maxTokens, jsonMode }) {
+  return fetchWithRetry(url, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0.7,
-      max_tokens: maxTokens || 2000,
-    }),
+    body: JSON.stringify(openAIStyleBody({ model, systemPrompt, userPrompt, maxTokens, jsonMode })),
   }, MODEL_TIMEOUT_MS);
+}
 
-  const parsed = await parseJsonOrText(response);
+async function callOpenAIStyle({ providerName, url, apiKey, model, systemPrompt, userPrompt, maxTokens, jsonMode = false }) {
+  let response = await postOpenAIStyle({ url, apiKey, model, systemPrompt, userPrompt, maxTokens, jsonMode });
+  let parsed = await parseJsonOrText(response);
+
+  if (!response.ok && jsonMode && response.status === 400 && /response_format|json/i.test(parsed.text || '')) {
+    response = await postOpenAIStyle({ url, apiKey, model, systemPrompt, userPrompt, maxTokens, jsonMode: false });
+    parsed = await parseJsonOrText(response);
+  }
+
   if (!response.ok) {
     throw new Error(`${providerName} ${response.status}: ${redact(parsed.text).slice(0, 240)}`);
   }
 
-  const content = parsed.json?.choices?.[0]?.message?.content;
-  if (!content) {
-    throw new Error(`${providerName} 返回结构异常：${redact(parsed.text).slice(0, 240)}`);
-  }
-  return content;
+  return extractChatContent(providerName, parsed.json, parsed.text);
 }
 
 function geminiGenerationConfig(model, maxTokens) {
   const config = {
-    temperature: 0.45,
+    temperature: 0.35,
     maxOutputTokens: maxTokens || 1400,
+    responseMimeType: 'application/json',
   };
   if (/flash/i.test(model)) {
     config.thinkingConfig = { thinkingBudget: 0 };
@@ -160,9 +274,10 @@ function geminiGenerationConfig(model, maxTokens) {
   return config;
 }
 
-async function postGemini({ apiKey, model, systemPrompt, userPrompt, maxTokens, useThinkingConfig = true }) {
+async function postGemini({ apiKey, model, systemPrompt, userPrompt, maxTokens, useThinkingConfig = true, useJsonMime = true }) {
   const generationConfig = geminiGenerationConfig(model, maxTokens);
   if (!useThinkingConfig) delete generationConfig.thinkingConfig;
+  if (!useJsonMime) delete generationConfig.responseMimeType;
 
   return fetchWithRetry(
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
@@ -185,6 +300,10 @@ async function callGemini({ apiKey, model, systemPrompt, userPrompt, maxTokens }
   let parsed = await parseJsonOrText(response);
   if (!response.ok && response.status === 400 && /thinkingConfig|thinking_budget|ThinkingBudget|responseMimeType|json/i.test(parsed.text || '')) {
     response = await postGemini({ apiKey, model, systemPrompt, userPrompt, maxTokens, useThinkingConfig: false });
+    parsed = await parseJsonOrText(response);
+  }
+  if (!response.ok && response.status === 400 && /responseMimeType|json|mime/i.test(parsed.text || '')) {
+    response = await postGemini({ apiKey, model, systemPrompt, userPrompt, maxTokens, useThinkingConfig: false, useJsonMime: false });
     parsed = await parseJsonOrText(response);
   }
   if (!response.ok && response.status === 404 && model !== 'gemini-2.5-flash') {
@@ -254,6 +373,7 @@ async function handleModel(req, res, provider) {
       systemPrompt,
       userPrompt,
       maxTokens,
+      jsonMode: true,
     });
   }
 
@@ -281,7 +401,9 @@ async function handleModel(req, res, provider) {
     });
   }
 
-  throw new Error(`不支持的模型通道：${provider}`);
+  const error = new Error(`不支持的模型通道：${provider}`);
+  error.status = 404;
+  throw error;
 }
 
 async function handleEastmoney(req, res) {
@@ -302,26 +424,48 @@ async function handleEastmoney(req, res) {
   res.writeHead(response.ok ? 200 : response.status, {
     'Content-Type': response.headers.get('content-type') || 'application/json; charset=utf-8',
     'Content-Length': Buffer.byteLength(text),
-    'X-Dispatch-Proxy': '1',
-    'Cache-Control': 'no-store',
+    ...proxyHeaders(),
   });
   res.end(text);
 }
 
 const server = http.createServer(async (req, res) => {
   try {
-    if (req.method === 'GET' && req.url === '/api/health') {
-      sendJson(res, 200, { ok: true });
+    const reqUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+
+    if (req.method === 'GET' && reqUrl.pathname === '/api/health') {
+      sendJson(res, 200, {
+        ok: true,
+        service: 'AI Council model proxy',
+        uptime_seconds: Math.round(process.uptime()),
+        auth: { token_required: Boolean(API_TOKEN) },
+        limits: {
+          max_body_bytes: MAX_BODY_BYTES,
+          model_rate_limit_per_window: MODEL_RATE_LIMIT_MAX,
+          market_rate_limit_per_window: MARKET_RATE_LIMIT_MAX,
+          window_ms: RATE_LIMIT_WINDOW_MS,
+          model_timeout_ms: MODEL_TIMEOUT_MS,
+          market_timeout_ms: MARKET_TIMEOUT_MS,
+        },
+        generated_at: new Date().toISOString(),
+      });
       return;
     }
 
-    if (req.method === 'GET' && req.url?.startsWith('/api/market/eastmoney')) {
+    if (req.method === 'GET' && reqUrl.pathname === '/api/market/eastmoney') {
+      if (!enforceRateLimit(req, res, 'market', MARKET_RATE_LIMIT_MAX)) return;
       await handleEastmoney(req, res);
       return;
     }
 
-    const match = req.url?.match(/^\/api\/model\/([a-z-]+)$/);
+    const match = reqUrl.pathname.match(/^\/api\/model\/([a-z-]+)$/);
     if (req.method === 'POST' && match) {
+      const auth = requireApiToken(req);
+      if (!auth.ok) {
+        sendJson(res, 401, { error: auth.reason || '鉴权失败' });
+        return;
+      }
+      if (!enforceRateLimit(req, res, 'model', MODEL_RATE_LIMIT_MAX)) return;
       const content = await handleModel(req, res, match[1]);
       sendJson(res, 200, { content });
       return;
@@ -331,11 +475,33 @@ const server = http.createServer(async (req, res) => {
   } catch (error) {
     const message = redact(error.message || '模型代理失败');
     const statusMatch = message.match(/\b(400|401|403|404|429)\b/);
-    const status = statusMatch ? Number(statusMatch[1]) : /超时|aborted/i.test(message) ? 504 : 500;
+    const status = error.status
+      ? error.status
+      : error.code === 'PAYLOAD_TOO_LARGE'
+      ? 413
+      : error.code === 'BAD_JSON'
+        ? 400
+        : statusMatch
+          ? Number(statusMatch[1])
+          : /超时|aborted/i.test(message)
+            ? 504
+            : 500;
     sendJson(res, status, { error: message });
   }
 });
 
 server.listen(PORT, HOST, () => {
   console.log(`dispatch model proxy listening on http://${HOST}:${PORT}`);
+  if (API_TOKEN) {
+    console.log('dispatch model proxy API token enabled');
+  }
 });
+
+setInterval(() => {
+  const cutoff = Date.now() - RATE_LIMIT_WINDOW_MS;
+  for (const [key, hits] of rateWindows) {
+    const fresh = hits.filter((ts) => ts > cutoff);
+    if (fresh.length) rateWindows.set(key, fresh);
+    else rateWindows.delete(key);
+  }
+}, 5 * 60_000).unref?.();

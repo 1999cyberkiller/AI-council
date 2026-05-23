@@ -7,6 +7,7 @@ const HISTORY_KEY  = 'dispatch:history:v1';
 const WATCHLIST_KEY = 'dispatch:watchlist:v1';
 const TABS_KEY     = 'dispatch:tabs:v1';
 const EVENTS_KEY   = 'dispatch:events:v1';
+const INVESTMENT_MEMOS_KEY = 'dispatch:investment-memos:v1';
 
 export const HISTORY_MAX = 50;
 export const WATCHLIST_MAX = 30;
@@ -94,3 +95,12 @@ export async function appendEvent(evt) {
   return safeSet(EVENTS_KEY, list.slice(-EVENTS_MAX));
 }
 export async function clearEvents() { return safeRemove(EVENTS_KEY); }
+
+// ── Investment memos ──
+export async function loadInvestmentMemos() {
+  const v = safeGet(INVESTMENT_MEMOS_KEY);
+  return v && typeof v === 'object' && !Array.isArray(v) ? v : {};
+}
+export async function saveInvestmentMemos(map) {
+  return safeSet(INVESTMENT_MEMOS_KEY, map && typeof map === 'object' ? map : {});
+}

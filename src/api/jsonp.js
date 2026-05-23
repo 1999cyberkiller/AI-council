@@ -9,6 +9,24 @@ const CORS_PROXIES = [
   (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
 ];
 
+function parseJsonOrJsonp(text) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    const match = String(text || '').trim().match(/^[\w$.]+\(([\s\S]*)\);?$/);
+    if (!match) throw new Error('返回不是 JSON/JSONP');
+    return JSON.parse(match[1]);
+  }
+}
+
+function jsonResult(data, status = 200) {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    json: async () => data,
+  };
+}
+
 export async function fetchWithTimeout(url, ms = 6000, signal) {
   const ctrl = new AbortController();
   const tid = setTimeout(() => ctrl.abort(), ms);
@@ -59,41 +77,39 @@ export function fetchJsonp(url, paramName = 'cb', timeoutMs = 10000) {
   });
 }
 
-// 用于东方财富：JSONP 优先 → CORS 代理回退 → 直连
-export async function fetchEastmoney(url) {
-  // 路径 1: VPS 同源代理。生产环境优先走它，避免公共 CORS 代理不稳定。
-  try {
-    const r = await fetchWithTimeout(`/api/market/eastmoney?url=${encodeURIComponent(url)}`, 10000);
-    if (r.headers.get('x-dispatch-proxy') === '1') {
-      if (r.ok) return r;
-      const d = await r.json().catch(() => ({}));
-      throw new Error(d.error || `行情代理 HTTP ${r.status}`);
-    }
-  } catch (e) {
-    if (String(e.message || '').includes('行情代理')) throw e;
-  }
+async function fetchTextAsJson(url, ms) {
+  const r = await fetchWithTimeout(url, ms);
+  const text = await r.text();
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return jsonResult(parseJsonOrJsonp(text), r.status);
+}
 
-  // 路径 2: JSONP（本地 dev 没有代理时，绕开 CORS）
+// 用于东方财富：VPS 同源代理优先 → JSONP → CORS 代理 → 直连
+export async function fetchEastmoney(url) {
+  // 路径 1: 线上同源代理，避免浏览器 CORS 和公共代理不稳定。
+  try {
+    if (typeof window !== 'undefined') {
+      return await fetchTextAsJson(`/api/market/eastmoney?url=${encodeURIComponent(url)}`, 10000);
+    }
+  } catch { /* 进入 JSONP 回退 */ }
+
+  // 路径 2: JSONP（适用于浏览器直连东方财富）
   try {
     const data = await fetchJsonp(url, 'cb', 8000);
-    return { ok: true, json: async () => data };
+    return jsonResult(data);
   } catch { /* 进入代理回退 */ }
 
   // 路径 3: CORS 代理
   let lastErr = null;
   for (const proxyFn of CORS_PROXIES) {
     try {
-      const r = await fetchWithTimeout(proxyFn(url), 9000);
-      if (r.ok) return r;
-      lastErr = new Error(`代理 HTTP ${r.status}`);
+      return await fetchTextAsJson(proxyFn(url), 9000);
     } catch (e) { lastErr = e; }
   }
 
   // 路径 4: 直连兜底
   try {
-    const r = await fetchWithTimeout(url, 4000);
-    if (r.ok) return r;
-    lastErr = new Error(`直连 HTTP ${r.status}`);
+    return await fetchTextAsJson(url, 4000);
   } catch (e) { lastErr = e; }
 
   const host = (() => { try { return new URL(url).hostname; } catch { return url; } })();
