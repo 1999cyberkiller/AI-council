@@ -1,6 +1,19 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { buildQVMRForDispatch, qvmrActionToVerdict } from '../quant/qvmrAdapter.js';
 
+/**
+ * Task 3 改进：
+ * - dataCoverage < MIN_COVERAGE_FOR_VERDICT 时不出分数，UI 显示"数据不足"
+ * - dataCoverage 在 MIN_COVERAGE_FOR_VERDICT ~ SAFE_COVERAGE 之间出分但加灰色警告
+ * - dataCoverage >= SAFE_COVERAGE 时正常展示
+ *
+ * 原因：QVMR 配置里很多 signal 在没接入指数 / 行业 / 估值分位数据时永远是 false。
+ *       这会系统性地把所有股票打成"持有或降仓"，比没分数更糟糕——会让人误以为
+ *       系统真的算过了，从而相信一个本质是"全部 null 默认 false"的虚假结论。
+ */
+const MIN_COVERAGE_FOR_VERDICT = 50;
+const SAFE_COVERAGE = 75;
+
 const MANUAL_GROUPS = [
   {
     title: '市场环境',
@@ -85,13 +98,13 @@ export const QVMRPanel = ({ stockData, klineData, financialsData, editorState })
   const qvmrVerdict = qvmrActionToVerdict(qvmr.action);
   const isOverride = editorVerdict && editorVerdict !== qvmrVerdict && (qvmr.hardRules.mustExit || !qvmr.hardRules.allowNewPosition);
 
+  const insufficient = dataCoverage < MIN_COVERAGE_FOR_VERDICT;
+  const partial = dataCoverage < SAFE_COVERAGE && !insufficient;
+
   const updateManual = (key, checked) => {
     const next = {
       ...manualMap,
-      [code]: {
-        ...(manualMap[code] || {}),
-        [key]: checked,
-      },
+      [code]: { ...(manualMap[code] || {}), [key]: checked },
     };
     setManualMap(next);
     saveManualMap(next);
@@ -104,6 +117,64 @@ export const QVMRPanel = ({ stockData, klineData, financialsData, editorState })
     saveManualMap(next);
   };
 
+  /* ── insufficient: 不出分数，直接显示"数据不足"卡片 ───────── */
+  if (insufficient) {
+    return (
+      <section className="qvmr-panel fade-up">
+        <div className="qvmr-head">
+          <div>
+            <div className="mono small-caps qvmr-kicker">QVMR · 交 易 纪 律 裁 判</div>
+            <h3 className="display-serif qvmr-title">QVMR 交易裁决</h3>
+          </div>
+          <div className="qvmr-action qvmr-action--insufficient">
+            <span>数据不足</span>
+            <strong>—</strong>
+          </div>
+        </div>
+
+        <div className="qvmr-body">
+          <div className="qvmr-insufficient-block">
+            <div className="qvmr-insufficient-title">⚠ 数据覆盖率 {dataCoverage}%，不出具结论</div>
+            <div className="qvmr-insufficient-body">
+              QVMR 评分需要市场、行业、估值分位等数据才能给出有效结论。
+              当前可自动获取的信号不到一半。强行打分会因为大量信号缺失被默认当作"未满足"，
+              系统性把所有股票判成"持有或降仓"——这比不打分更糟糕，因为会让人误以为系统真的算过了。
+            </div>
+            <div className="qvmr-insufficient-hint">
+              下面可以手动补全已知的市场 / 行业 / 公告信号。勾选数量足够时会自动出分。
+            </div>
+          </div>
+
+          <details className="qvmr-manual" open>
+            <summary>
+              <span>手动补全市场、行业和公告风险</span>
+              <em>当前自动覆盖约 {dataCoverage}%</em>
+            </summary>
+            <div className="qvmr-manual-grid">
+              {MANUAL_GROUPS.map((group) => (
+                <div className="qvmr-manual-group" key={group.title}>
+                  <h4>{group.title}</h4>
+                  {group.items.map(([key, label]) => (
+                    <label key={key} className="qvmr-check">
+                      <input
+                        type="checkbox"
+                        checked={manualSignals[key] === true}
+                        onChange={(e) => updateManual(key, e.target.checked)}
+                      />
+                      <span>{label}</span>
+                    </label>
+                  ))}
+                </div>
+              ))}
+            </div>
+            <button className="btn-ghost qvmr-reset" onClick={resetManual}>清空手动信号</button>
+          </details>
+        </div>
+      </section>
+    );
+  }
+
+  /* ── partial / safe: 出分数，但 partial 时加 banner ─────── */
   const sections = [
     ['市场', qvmr.breakdown.marketScore, 20],
     ['行业', qvmr.breakdown.industryScore, 20],
@@ -114,10 +185,13 @@ export const QVMRPanel = ({ stockData, klineData, financialsData, editorState })
   ];
 
   return (
-    <section className="qvmr-panel fade-up">
+    <section className={`qvmr-panel fade-up ${partial ? 'qvmr-panel--partial' : ''}`}>
       <div className="qvmr-head">
         <div>
-          <div className="mono small-caps qvmr-kicker">QVMR · 交 易 纪 律 裁 判</div>
+          <div className="mono small-caps qvmr-kicker">
+            QVMR · 交 易 纪 律 裁 判
+            {partial && <span className="qvmr-coverage-warn"> · 数据覆盖 {dataCoverage}%，结论偏保守</span>}
+          </div>
           <h3 className="display-serif qvmr-title">QVMR 交易裁决</h3>
         </div>
         <div className={`qvmr-action qvmr-action--${qvmr.action}`}>
@@ -127,6 +201,14 @@ export const QVMRPanel = ({ stockData, klineData, financialsData, editorState })
       </div>
 
       <div className="qvmr-body">
+        {partial && (
+          <div className="qvmr-partial-banner">
+            ⓘ 自动信号覆盖率 <strong>{dataCoverage}%</strong>。
+            未获取到的市场和行业信号被默认按"未满足"处理，因此分数偏保守。
+            可在下方手动补全已知信号以提升结论可信度。
+          </div>
+        )}
+
         <div className="qvmr-verdict-row">
           <div>
             <span>主编观点</span>
@@ -183,7 +265,7 @@ export const QVMRPanel = ({ stockData, klineData, financialsData, editorState })
         <details className="qvmr-manual">
           <summary>
             <span>手动补全市场、行业和公告风险</span>
-            <em>数据覆盖约 {dataCoverage}%</em>
+            <em>当前自动覆盖约 {dataCoverage}%</em>
           </summary>
           <div className="qvmr-manual-grid">
             {MANUAL_GROUPS.map((group) => (

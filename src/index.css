@@ -3762,3 +3762,93 @@ body {
       }
     }
   }
+/* ─────────────────────────────────────────────────────────────────
+   QVMR Panel · 数据覆盖率相关样式补丁（追加到 src/index.css 末尾）
+   ───────────────────────────────────────────────────────────────── */
+
+/* "数据不足"状态的右上徽章 —— 灰底、不像评分那样高对比 */
+.qvmr-action--insufficient {
+  background: var(--ink-faded);
+  color: var(--paper);
+  opacity: 0.85;
+}
+
+/* 中央"数据不足"主块 */
+.qvmr-insufficient-block {
+  padding: 18px 20px;
+  border: 1.5px dashed var(--ink-faded);
+  background: rgba(0, 0, 0, 0.03);
+  margin-bottom: 18px;
+}
+
+.qvmr-insufficient-title {
+  font-family: 'Fraunces', 'Noto Serif SC', serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+
+.qvmr-insufficient-body {
+  font-family: 'Fraunces', 'Noto Serif SC', serif;
+  font-size: 0.88rem;
+  line-height: 1.65;
+  color: var(--ink-soft);
+}
+
+.qvmr-insufficient-body code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  padding: 1px 5px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 2px;
+}
+
+.qvmr-insufficient-hint {
+  margin-top: 10px;
+  font-family: 'Fraunces', 'Noto Serif SC', serif;
+  font-size: 0.82rem;
+  color: var(--ink-faded);
+  font-style: italic;
+}
+
+/* partial 状态：整体面板加一点黄色描边，提示"分数仅供参考" */
+.qvmr-panel--partial {
+  border-left: 4px solid #d4a017;
+}
+
+.qvmr-partial-banner {
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  background: rgba(212, 160, 23, 0.08);
+  border: 1px solid rgba(212, 160, 23, 0.35);
+  font-family: 'Fraunces', 'Noto Serif SC', serif;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.qvmr-partial-banner strong {
+  color: #8a6810;
+  font-weight: 700;
+}
+
+/* kicker 行的覆盖率警告字段 */
+.qvmr-coverage-warn {
+  color: #b08015;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+/* dark mode 下颜色调一下 */
+[data-theme='dark'] .qvmr-partial-banner {
+  background: rgba(232, 188, 70, 0.12);
+  border-color: rgba(232, 188, 70, 0.4);
+}
+[data-theme='dark'] .qvmr-partial-banner strong,
+[data-theme='dark'] .qvmr-coverage-warn {
+  color: #e8bc46;
+}
+[data-theme='dark'] .qvmr-insufficient-block {
+  background: rgba(255, 255, 255, 0.03);
+}
