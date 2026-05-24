@@ -36,7 +36,7 @@ import { pausePrewarm, resumePrewarm } from '../lib/prewarm';
 export const ANALYST_CALL_TIMEOUT_MS = 28000;
 export const EDITOR_CALL_TIMEOUT_MS = 35000;
 
-const DATA_SOURCE_META = {
+export const DATA_SOURCE_META = {
   quote: { label: '行情' },
   kline: { label: 'K 线' },
   baseline: { label: '基准' },
@@ -46,7 +46,7 @@ const DATA_SOURCE_META = {
   news: { label: '新闻' },
 };
 
-const makeInitialDataHealth = () =>
+export const makeInitialDataHealth = () =>
   Object.fromEntries(
     Object.entries(DATA_SOURCE_META).map(([id, meta]) => [
       id,
@@ -62,7 +62,7 @@ const withTimeout = (promise, ms) =>
 /* ──────────────────────────────────────────────────────────────
    STATE SHAPE
    ────────────────────────────────────────────────────────────── */
-const initialState = {
+export const initialState = {
   phase: 'idle',         // idle | fetching | analysts | editor | done | error | stopped
   ticker: '',
   stockData: null,
@@ -89,7 +89,7 @@ const initialState = {
 /* ──────────────────────────────────────────────────────────────
    REDUCER
    ────────────────────────────────────────────────────────────── */
-function reducer(state, action) {
+export function reducer(state, action) {
   switch (action.type) {
     case 'reset':
       return { ...initialState, klineRange: state.klineRange };

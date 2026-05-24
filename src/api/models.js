@@ -116,7 +116,7 @@ async function readProxyPayload(response) {
  *   5xx     服务端错误 → 可重试
  *   502     代理返回了 200 但 content 为空 → 视作可重试（语义同 5xx）
  */
-function makeProxyError(message, status) {
+export function makeProxyError(message, status) {
   const err = new Error(message);
   err.status = status;
   return err;
@@ -167,7 +167,7 @@ async function callProxy(model, apiKey, systemPrompt, userPrompt, variant, signa
  * 严格基于 status code 判定是否可重试，不再依赖错误文本正则。
  * 这样 "got 400 results back" 之类的错误文本不会被误判成 HTTP 400。
  */
-function isRetryable(error) {
+export function isRetryable(error) {
   if (error?.name === 'AbortError') return false;
   const status = error?.status;
   if (typeof status !== 'number') return false;  // 未知错误，保守不重试
@@ -178,7 +178,7 @@ function isRetryable(error) {
   return false;
 }
 
-async function withRetry(fn, maxAttempts = 2) {
+export async function withRetry(fn, maxAttempts = 2) {
   let lastErr;
   for (let i = 0; i < maxAttempts; i++) {
     try {
