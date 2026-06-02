@@ -35,6 +35,7 @@ import { ActionButtons } from './components/ActionButtons';
 import { EventsBadge } from './components/EventsBadge';
 import { FinancialsBadge } from './components/FinancialsBadge';
 import { NewsBadge } from './components/NewsBadge';
+import { ThemeRotationPanel } from './components/ThemeRotationPanel';
 import { SecondRoundSection } from './components/SecondRoundSection';
 import { FreeAskSection } from './components/FreeAskSection';
 import { EvolutionTimeline } from './components/EvolutionTimeline';
@@ -126,6 +127,7 @@ export default function App() {
         financialsData: evt.financialsData,
         consensusData: evt.consensusData,
         newsData: evt.newsData,
+        themeRotationData: evt.themeRotationData,
         dataHealth: evt.dataHealth,
         freeAskThreads: [],
         secondRound: null,
@@ -160,6 +162,7 @@ export default function App() {
         financialsData: evt.financialsData,
         consensusData: evt.consensusData,
         newsData: evt.newsData,
+        themeRotationData: evt.themeRotationData,
         dataHealth: evt.dataHealth,
         freeAskThreads: [],
       };
@@ -238,6 +241,7 @@ export default function App() {
               financialsData: matched.financialsData || null,
               consensusData: matched.consensusData || null,
               newsData: matched.newsData || null,
+              themeRotationData: matched.themeRotationData || null,
               dataHealth: matched.dataHealth || {},
               freeAskThreads: matched.freeAskThreads || [],
             });
@@ -300,6 +304,7 @@ export default function App() {
         financialsData: session.financialsData ?? cur.financialsData,
         consensusData: session.consensusData ?? cur.consensusData,
         newsData: session.newsData ?? cur.newsData,
+        themeRotationData: session.themeRotationData ?? cur.themeRotationData,
         dataHealth: session.dataHealth ?? cur.dataHealth,
       };
       // 引用相等检查避免无意义 setState
@@ -310,6 +315,7 @@ export default function App() {
         cur.financialsData === patched.financialsData &&
         cur.consensusData === patched.consensusData &&
         cur.newsData === patched.newsData &&
+        cur.themeRotationData === patched.themeRotationData &&
         cur.dataHealth === patched.dataHealth
       ) return prev;
       const next = [...prev];
@@ -320,7 +326,7 @@ export default function App() {
     activeTabId, session.ticker, session.phase,
     session.secondRound, session.freeAskThreads,
     session.eventsData, session.financialsData, session.consensusData, session.newsData,
-    session.dataHealth,
+    session.themeRotationData, session.dataHealth,
   ]);
 
   // 等 session 静止后再写 history（避免 secondRound 跑一半就把中间态写盘）
@@ -341,6 +347,7 @@ export default function App() {
           financialsData: session.financialsData ?? cur.financialsData,
           consensusData: session.consensusData ?? cur.consensusData,
           newsData: session.newsData ?? cur.newsData,
+          themeRotationData: session.themeRotationData ?? cur.themeRotationData,
           dataHealth: session.dataHealth ?? cur.dataHealth,
         };
         if (
@@ -350,6 +357,7 @@ export default function App() {
           cur.financialsData === patched.financialsData &&
           cur.consensusData === patched.consensusData &&
           cur.newsData === patched.newsData &&
+          cur.themeRotationData === patched.themeRotationData &&
           cur.dataHealth === patched.dataHealth
         ) return prev;
         const next = [...prev];
@@ -364,7 +372,7 @@ export default function App() {
     session.secondRoundRunning, session.freeAskRunning,
     session.secondRound, session.freeAskThreads,
     session.eventsData, session.financialsData, session.consensusData, session.newsData,
-    session.dataHealth,
+    session.themeRotationData, session.dataHealth,
   ]);
 
   /* ── Handlers ──────────────────────────────────────────── */
@@ -401,6 +409,7 @@ export default function App() {
       financialsData: tab.financialsData || null,
       consensusData: tab.consensusData || null,
       newsData: tab.newsData || null,
+      themeRotationData: tab.themeRotationData || null,
       dataHealth: tab.dataHealth || {},
       freeAskThreads: tab.freeAskThreads || [],
     });
@@ -434,6 +443,7 @@ export default function App() {
       financialsData: entry.financialsData || null,
       consensusData: entry.consensusData || null,
       newsData: entry.newsData || null,
+      themeRotationData: entry.themeRotationData || null,
       dataHealth: entry.dataHealth || {},
       freeAskThreads: entry.freeAskThreads || [],
     });
@@ -1118,6 +1128,9 @@ export default function App() {
           )}
           {submittedTicker && session.stockData && session.newsData && (
             <NewsBadge newsData={session.newsData} />
+          )}
+          {submittedTicker && session.stockData && session.themeRotationData && !session.themeRotationData.skipped && (
+            <ThemeRotationPanel snapshot={session.themeRotationData} />
           )}
 
           {submittedTicker && session.stockData && (

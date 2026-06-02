@@ -141,6 +141,11 @@ export function buildUserPrompt(stockData, klineData, analystId, extras = {}) {
     lines.push(`简介：${stockData.description.slice(0, 200)}`);
   }
 
+  if (extras.themeRotationText) {
+    lines.push('');
+    lines.push(extras.themeRotationText);
+  }
+
   // 技术派额外注入 K 线技术指标
   if (analystId === 'tech' && klineData && klineData.length > 0) {
     const last = klineData[klineData.length - 1];
@@ -260,6 +265,10 @@ export function buildEditorUserPrompt(stockData, analystOutputs, extras = {}) {
   if (extras.consensusText) {
     lines.push('');
     lines.push(extras.consensusText);
+  }
+  if (extras.themeRotationText) {
+    lines.push('');
+    lines.push(extras.themeRotationText);
   }
   // V21 注入近期新闻（仅主编）
   if (extras.newsText) {

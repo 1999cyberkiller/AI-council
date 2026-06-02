@@ -429,6 +429,72 @@ async function handleEastmoney(req, res) {
   res.end(text);
 }
 
+function normalizeYahooSymbol(symbol) {
+  const s = String(symbol || '').trim().toUpperCase();
+  if (!/^[A-Z0-9.^-]{1,16}$/.test(s)) {
+    throw new Error(`非法 Yahoo symbol: ${symbol}`);
+  }
+  return s;
+}
+
+function normalizeYahooRows(payload) {
+  const result = payload?.chart?.result?.[0];
+  const timestamps = result?.timestamp || [];
+  const quote = result?.indicators?.quote?.[0] || {};
+  const adjClose = result?.indicators?.adjclose?.[0]?.adjclose || [];
+  return timestamps
+    .map((ts, i) => ({
+      date: new Date(ts * 1000).toISOString().slice(0, 10),
+      open: Number(quote.open?.[i]),
+      high: Number(quote.high?.[i]),
+      low: Number(quote.low?.[i]),
+      close: Number.isFinite(Number(adjClose[i])) ? Number(adjClose[i]) : Number(quote.close?.[i]),
+      volume: Number(quote.volume?.[i]),
+    }))
+    .filter((row) => Number.isFinite(row.close) && Number.isFinite(row.volume));
+}
+
+async function handleYahooChart(req, res) {
+  const reqUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  const symbols = String(reqUrl.searchParams.get('symbols') || '')
+    .split(',')
+    .map(normalizeYahooSymbol)
+    .filter(Boolean)
+    .slice(0, 40);
+  if (!symbols.length) throw new Error('缺少 symbols');
+  const range = reqUrl.searchParams.get('range') || '1y';
+  const interval = reqUrl.searchParams.get('interval') || '1d';
+  if (!/^(6mo|8mo|1y|2y)$/.test(range)) throw new Error('Yahoo range 不支持');
+  if (!/^(1d)$/.test(interval)) throw new Error('Yahoo interval 不支持');
+
+  const entries = await Promise.all(symbols.map(async (symbol) => {
+    try {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${encodeURIComponent(range)}&interval=${encodeURIComponent(interval)}&events=history&includeAdjustedClose=true`;
+      const response = await fetchWithRetry(url, {
+        headers: {
+          Accept: 'application/json,text/plain,*/*',
+          Referer: 'https://finance.yahoo.com/',
+          'User-Agent': 'Mozilla/5.0 AI-Council/1.0',
+        },
+      }, MARKET_TIMEOUT_MS);
+      const parsed = await parseJsonOrText(response);
+      if (!response.ok) {
+        return [symbol, { ok: false, error: `Yahoo ${response.status}: ${redact(parsed.text).slice(0, 120)}`, rows: [] }];
+      }
+      return [symbol, { ok: true, rows: normalizeYahooRows(parsed.json) }];
+    } catch (error) {
+      return [symbol, { ok: false, error: redact(error.message).slice(0, 160), rows: [] }];
+    }
+  }));
+
+  sendJson(res, 200, {
+    ok: true,
+    provider: 'Yahoo Finance chart',
+    symbols: Object.fromEntries(entries),
+    generated_at: new Date().toISOString(),
+  });
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     const reqUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
@@ -455,6 +521,12 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && reqUrl.pathname === '/api/market/eastmoney') {
       if (!enforceRateLimit(req, res, 'market', MARKET_RATE_LIMIT_MAX)) return;
       await handleEastmoney(req, res);
+      return;
+    }
+
+    if (req.method === 'GET' && reqUrl.pathname === '/api/market/yahoo-chart') {
+      if (!enforceRateLimit(req, res, 'market', MARKET_RATE_LIMIT_MAX)) return;
+      await handleYahooChart(req, res);
       return;
     }
 

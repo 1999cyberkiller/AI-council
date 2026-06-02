@@ -29,6 +29,7 @@ import { resolveEvents } from '../api/events';
 import { resolveFinancials, formatFinancialsForPrompt } from '../api/financials';
 import { resolveConsensus, formatConsensusForPrompt } from '../api/consensus';
 import { resolveNews, formatNewsForPrompt } from '../api/news';
+import { resolveThemeRotation, formatThemeRotationForPrompt } from '../api/themeRotation';
 import { callModel, resolveVariant } from '../api/models';
 import { buildPersonaSignal } from '../lib/scoring';
 import { pausePrewarm, resumePrewarm } from '../lib/prewarm';
@@ -44,6 +45,7 @@ export const DATA_SOURCE_META = {
   financials: { label: '财务' },
   consensus: { label: '共识' },
   news: { label: '新闻' },
+  themeRotation: { label: '主题轮动' },
 };
 
 export const makeInitialDataHealth = () =>
@@ -76,6 +78,7 @@ export const initialState = {
   financialsData: null,
   consensusData: null,
   newsData: null,
+  themeRotationData: null,
   dataHealth: {},
   baseline: null,        // { market, code, name, price } 或 null
   secondRound: null,     // null | { status, topics: [...] }
@@ -451,6 +454,7 @@ export function useDispatchSession({
       const extras = promptExtras || {
         financialsText: formatFinancialsForPrompt(stateRef.current.financialsData),
         consensusText: formatConsensusForPrompt(stateRef.current.consensusData),
+        themeRotationText: formatThemeRotationForPrompt(stateRef.current.themeRotationData),
       };
       const sys = buildSystemPrompt(analyst, personaSignal);
       const usr = buildUserPrompt(data, klineForPrompt, analyst.id, extras);
@@ -509,6 +513,7 @@ export function useDispatchSession({
       const eExtras = extrasOverride || {
         financialsText: formatFinancialsForPrompt(stateRef.current.financialsData),
         consensusText: formatConsensusForPrompt(stateRef.current.consensusData),
+        themeRotationText: formatThemeRotationForPrompt(stateRef.current.themeRotationData),
         newsText: formatNewsForPrompt(stateRef.current.newsData),
       };
       const eUsr = buildEditorUserPrompt(data, [...successful, ...failed], eExtras);
@@ -701,17 +706,58 @@ export function useDispatchSession({
         return null;
       });
 
+    const themeRotationPromise = data.market === 'US'
+      ? resolveThemeRotation(data)
+          .then((td) => {
+            if (isCurrent()) {
+              dispatch({ type: 'set_data', field: 'themeRotationData', value: td });
+              if (td?.skipped) {
+                dispatch({ type: 'data_health', id: 'themeRotation', patch: { status: 'empty', detail: td.reason || '本次无需主题轮动', source: 'Yahoo Finance', fetchedAt: Date.now() } });
+              } else if (td?.themes?.length) {
+                dispatch({
+                  type: 'data_health', id: 'themeRotation',
+                  patch: {
+                    status: 'ok',
+                    detail: `科技主题轮动 ${td.leaders?.slice(0, 3).join('、') || '已返回'}`,
+                    count: td.themes.length,
+                    source: 'Yahoo Finance',
+                    fetchedAt: Date.now(),
+                  },
+                });
+              } else {
+                dispatch({ type: 'data_health', id: 'themeRotation', patch: { status: 'empty', detail: '主题轮动暂无有效主题', source: 'Yahoo Finance', fetchedAt: Date.now() } });
+              }
+            }
+            return td;
+          })
+          .catch((e) => {
+            if (isCurrent()) {
+              dispatch({ type: 'set_data', field: 'themeRotationData', value: null });
+              dispatch({ type: 'data_health', id: 'themeRotation', patch: { status: 'warning', detail: errText(e), source: 'Yahoo Finance', fetchedAt: Date.now() } });
+            }
+            return null;
+          })
+      : Promise.resolve(null).then((td) => {
+          if (isCurrent()) {
+            dispatch({ type: 'data_health', id: 'themeRotation', patch: { status: 'empty', detail: '主题轮动当前用于美股科技议题', source: 'Yahoo Finance', fetchedAt: Date.now() } });
+          }
+          return td;
+        });
+
     // ── 等财务和共识 ready 再发分析师（最多 4 秒）──
     const promptExtras = await (async () => {
-      const [fin, cons] = await Promise.all([
+      const [fin, cons, themeRotation] = await Promise.all([
         withTimeout(finPromise, 4000),
         withTimeout(consPromise, 4000),
+        withTimeout(themeRotationPromise, 4000),
       ]);
       return {
         financialsData: fin || null,
         consensusData: cons || null,
+        themeRotationData: themeRotation || null,
         financialsText: formatFinancialsForPrompt(fin) || '',
         consensusText: formatConsensusForPrompt(cons) || '',
+        themeRotationText: formatThemeRotationForPrompt(themeRotation) || '',
       };
     })();
 
@@ -783,8 +829,10 @@ export function useDispatchSession({
       financialsData: promptExtras.financialsData,
       consensusData: promptExtras.consensusData,
       newsData: null,
+      themeRotationData: promptExtras.themeRotationData,
       financialsText: promptExtras.financialsText,
       consensusText: promptExtras.consensusText,
+      themeRotationText: promptExtras.themeRotationText,
       newsText: '',
     };
     let editorParsed = null;
@@ -793,17 +841,20 @@ export function useDispatchSession({
     const editorKey = editorModel ? aks[editorModel.id] : null;
     if (editorModel && editorKey && editorKey.trim()) {
       editorExtras = await (async () => {
-        const [fin, cons, news] = await Promise.all([
+        const [fin, cons, news, themeRotation] = await Promise.all([
           withTimeout(finPromise, 2000),
           withTimeout(consPromise, 2000),
           withTimeout(newsPromise, 2000),
+          withTimeout(themeRotationPromise, 2000),
         ]);
         return {
           financialsData: fin || promptExtras.financialsData || null,
           consensusData: cons || promptExtras.consensusData || null,
           newsData: news || null,
+          themeRotationData: themeRotation || promptExtras.themeRotationData || null,
           financialsText: formatFinancialsForPrompt(fin) || promptExtras.financialsText || '',
           consensusText: formatConsensusForPrompt(cons) || promptExtras.consensusText || '',
+          themeRotationText: formatThemeRotationForPrompt(themeRotation) || promptExtras.themeRotationText || '',
           newsText: formatNewsForPrompt(news) || '',
         };
       })();
@@ -832,6 +883,7 @@ export function useDispatchSession({
         financialsData: editorExtras.financialsData,
         consensusData: editorExtras.consensusData,
         newsData: editorExtras.newsData,
+        themeRotationData: editorExtras.themeRotationData,
         dataHealth: stateRef.current.dataHealth,
       });
     }
