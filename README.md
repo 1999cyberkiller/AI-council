@@ -1,11 +1,14 @@
 # AI 议会 · The AI Council Gazette
 
-四模型并行投资分析平台 · 集成 A 股 + 美股行情 · 主编综评 · K 线图 · 历史档案
+四模型并行投资分析平台 · 集成 A 股 + 美股行情 · 主编综评 · Evidence Log · Thesis 状态 · K 线图 · 历史档案
 
 ## 功能
 
 - **四位分析师并行撰稿**：价值派 / 技术派 / 宏观派 / 风险派，各由不同 LLM 担任
 - **主编综评**：第五个 LLM 综合四篇专栏，给出共识 / 分歧 / 最终裁决 / **对四位分析师打分（A/B/C/D）**
+- **Mira 风格研究质量层**：每条核心判断标注 claim type、evidence category、readiness impact，区分事实、预测、公司口径、市场定价和模型推断
+- **Thesis 状态管理**：主编输出 thesis state、research action、stale_after、must_refresh_if，证据不足时自动降级为 watch / needs_refresh
+- **Evidence Log 导出**：投资备忘录内置结构化证据台账，导出 Markdown 时保留可复核路径
 - **行情数据**：A 股（东方财富，无 key）+ 美股（Alpha Vantage）
 - **K 线图**：技术派栏目内嵌 90 日蜡烛图 + MA20/MA60，鼠标/触屏悬停查看 OHLC 详情
 - **多标的对比**：Tab 切换最近分析过的多只股票，结果都保留在内存

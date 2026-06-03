@@ -6,8 +6,37 @@ const FIELDS = [
   { key: 'bearCase', label: '反方理由', rows: 4 },
   { key: 'catalysts', label: '关键催化', rows: 3 },
   { key: 'invalidation', label: '失效条件', rows: 3 },
+  { key: 'mustRefreshIf', label: '刷新条件', rows: 3 },
+  { key: 'weakestLink', label: '最弱证据链', rows: 2 },
   { key: 'notes', label: '手记', rows: 3 },
 ];
+
+const STATE_LABELS = {
+  draft: 'DRAFT',
+  active: 'ACTIVE',
+  watch: 'WATCH',
+  upgrade_watch: 'UPGRADE',
+  downgrade_watch: 'DOWNGRADE',
+  narrative_watch: 'NARRATIVE',
+  stale: 'STALE',
+  retired: 'RETIRED',
+};
+
+const ACTION_LABELS = {
+  watch_only: 'WATCH ONLY',
+  upgrade_watch: 'UPGRADE WATCH',
+  downgrade_watch: 'DOWNGRADE WATCH',
+  add_to_research_queue: 'QUEUE',
+  reduce_research_priority: 'DEPRIORITIZE',
+  hedge_context: 'HEDGE CONTEXT',
+  event_setup: 'EVENT SETUP',
+  post_event_follow_through: 'FOLLOW THROUGH',
+  valuation_reset_watch: 'VALUATION WATCH',
+  risk_reduction_context: 'RISK CONTEXT',
+  needs_refresh: 'NEEDS REFRESH',
+  no_action: 'NO ACTION',
+  retire_thesis: 'RETIRE',
+};
 
 export const InvestmentMemoSection = ({
   stockData,
@@ -67,6 +96,29 @@ export const InvestmentMemoSection = ({
         </div>
       </div>
 
+      <div className="memo-quality-strip">
+        <div>
+          <span className="memo-quality-label">THESIS STATE</span>
+          <strong>{STATE_LABELS[localMemo.thesisState] || localMemo.thesisState || 'DRAFT'}</strong>
+        </div>
+        <div>
+          <span className="memo-quality-label">RESEARCH ACTION</span>
+          <strong>{ACTION_LABELS[localMemo.researchAction] || localMemo.researchAction || 'WATCH ONLY'}</strong>
+        </div>
+        <div>
+          <span className="memo-quality-label">SOURCE QUALITY</span>
+          <strong>{String(localMemo.sourceQuality || 'low').toUpperCase()}</strong>
+        </div>
+        {localMemo.evidenceStats && (
+          <div>
+            <span className="memo-quality-label">EVIDENCE</span>
+            <strong>
+              {localMemo.evidenceStats.durableCount || 0} durable · {localMemo.evidenceStats.blockerCount || 0} blocker
+            </strong>
+          </div>
+        )}
+      </div>
+
       <div className="investment-memo-grid">
         {FIELDS.map((field) => (
           <label key={field.key} className={`memo-field memo-field--${field.key}`}>
@@ -78,6 +130,14 @@ export const InvestmentMemoSection = ({
             />
           </label>
         ))}
+        <label className="memo-field memo-field--evidenceLog">
+          <span>Evidence Log</span>
+          <textarea
+            value={localMemo.evidenceLog || ''}
+            rows={7}
+            onChange={(e) => update('evidenceLog', e.target.value)}
+          />
+        </label>
       </div>
     </section>
   );

@@ -91,9 +91,27 @@ const ANALYST_OUTPUT_RULES = `
   "analysis": "正文 280-380 字，2-3 段，专栏笔法，可引用数据",
   "key_points": ["≤24 字", "≤24 字", "≤24 字"],
   "risk": "≤32 字风险或反方观点",
-  "data_gaps": ["≤30 字缺失公开数据"]
+  "data_gaps": ["≤30 字缺失公开数据"],
+  "evidence_log": [
+    {
+      "claim_area": "valuation|pricing|guidance|financials|risk|macro|industry|thesis_support",
+      "claim_type": "fact|reported_metric|company_claim|guidance|target|commitment|forecast|assumption|interpretation|opinion|market_pricing|sentiment|rumor_signal|derived_calculation",
+      "claim_text": "一句可核验信息，不写空话",
+      "source_speaker": "company|management|regulator|official_agency|exchange|sellside|buyside|media|industry_body|market|social|mira",
+      "verification_status": "verified|disclosed|claimed|estimated|modeled|unverified|contradicted",
+      "authority_level": "L1|L2|L3|L4|L5|L6",
+      "confidence": "high|medium|low",
+      "evidence_category": "verified_fact|reported_fact|company_statement|management_guidance|market_pricing|assumption|inference|estimate|weak_signal|stale|contradicted|unknown",
+      "freshness_status": "current|acceptable_for_period|preliminary|stale|unknown",
+      "conflict_status": "none|unresolved|contradicted|not_checked",
+      "treatment": "use_normally|attribute|sensitize|haircut|source_gap|monitor|exclude|open_item",
+      "readiness_impact": "supports_durable_conclusion|supports_working_view|monitoring_only|blocks_actionability|blocks_publication|not_material",
+      "notes": "≤40 字来源限制、口径或刷新说明"
+    }
+  ]
 }
-data_gaps：1-3 条，列出做出更可靠结论还缺什么具体数据；若已足够写 ["无明显数据缺口"]。`;
+data_gaps：1-3 条，列出做出更可靠结论还缺什么具体数据；若已足够写 ["无明显数据缺口"]。
+evidence_log：2-4 条，只记录你实际用到的核心信息。价格、估值和技术形态只能写 market_pricing，不能写成基本面验证。模型推断或情绪信号不能支撑 durable conclusion。`;
 
 export function buildSystemPrompt(analyst, personaSignal = null) {
   const signalBlock = personaSignal
@@ -109,6 +127,7 @@ ${analyst.persona}
 2. 观点鲜明但承认不确定性
 3. 严格基于公开信息；不确定时标注"据公开资料估算"
 4. 你的 verdict 是专栏观点，不构成投资建议
+5. 区分事实、公司口径、预测、假设、市场定价和你的推断；证据弱时主动降级
 ${ANALYST_OUTPUT_RULES}`;
 }
 
@@ -214,6 +233,32 @@ const EDITOR_OUTPUT_RULES = `
   "unique_contributions": [{ "analyst": "中文名", "point": "≤30 字独有观察" }],
   "aggregated_data_gaps": ["≤32 字共同数据缺口"],
   "watchpoint": "≤40 字关注点",
+  "thesis_state": "draft|active|watch|upgrade_watch|downgrade_watch|narrative_watch|stale|retired",
+  "research_action": "watch_only|upgrade_watch|downgrade_watch|add_to_research_queue|reduce_research_priority|hedge_context|event_setup|post_event_follow_through|valuation_reset_watch|risk_reduction_context|needs_refresh|no_action|retire_thesis",
+  "stale_after": "YYYY-MM-DD 或空字符串",
+  "must_refresh_if": ["≤36 字刷新条件"],
+  "evidence_summary": {
+    "durable_claim": "≤42 字可持续结论，若证据不足写空字符串",
+    "weakest_link": "≤42 字最弱证据链",
+    "source_quality": "high|medium|low"
+  },
+  "evidence_log": [
+    {
+      "claim_area": "consensus|dissent|thesis|risk|watchpoint",
+      "claim_type": "fact|reported_metric|company_claim|guidance|target|commitment|forecast|assumption|interpretation|opinion|market_pricing|sentiment|rumor_signal|derived_calculation",
+      "claim_text": "一句主编实际采用的核心信息",
+      "source_speaker": "mira",
+      "verification_status": "modeled|estimated|disclosed|unverified|contradicted",
+      "authority_level": "L6",
+      "confidence": "high|medium|low",
+      "evidence_category": "verified_fact|reported_fact|company_statement|management_guidance|market_pricing|assumption|inference|estimate|weak_signal|stale|contradicted|unknown",
+      "freshness_status": "current|acceptable_for_period|preliminary|stale|unknown",
+      "conflict_status": "none|unresolved|contradicted|not_checked",
+      "treatment": "use_normally|attribute|sensitize|haircut|source_gap|monitor|exclude|open_item",
+      "readiness_impact": "supports_durable_conclusion|supports_working_view|monitoring_only|blocks_actionability|blocks_publication|not_material",
+      "notes": "≤40 字"
+    }
+  ],
   "grades": { "<分析师中文名>": { "grade": "A|B|C|D", "comment": "≤24 字评语" } }
 }
 
@@ -223,6 +268,11 @@ const EDITOR_OUTPUT_RULES = `
 - dissent_areas ≤3 条，positions 的 value 是具体立场不是"看多/看空"，root_cause 四选一
 - unique_contributions ≤3 条，仅一位提出且有价值
 - aggregated_data_gaps ≤3 条，至少 2 位提到的优先；都说无则 ["四方一致认为公开数据已足够"]
+- thesis_state 只有在存在可追溯证据、刷新条件和证伪路径时才能写 active，否则写 draft/watch/narrative_watch
+- research_action 是研究动作，不是交易指令；证据缺口明显时优先 needs_refresh 或 watch_only
+- stale_after 通常设为未来 7-30 天；若有财报、政策、产品发布等明确事件，以该事件前后为刷新边界
+- must_refresh_if 至少 1 条，写会推翻或刷新本轮判断的具体条件
+- evidence_summary 要明确最弱证据链，不要粉饰
 - grades 评分严格不老好人；只为成功交稿的分析师评分
 - 所有引用分析师姓名仅限本期实际交稿的中文名，严禁编造`;
 
@@ -234,6 +284,7 @@ export function buildEditorSystemPrompt() {
 2. 敢于在分歧时表态，措辞克制
 3. 财新/WSJ 中文版社论笔法，避免"综合各位老师"水文
 4. 中文，不构成投资建议
+5. 任何 durable conclusion 必须能回溯到高权重证据；若主要依赖市场定价、公司口径、模型推断或弱信号，必须降级为 watch 或 needs_refresh
 
 应对缺稿：若某位分析师未交稿，简单提及一笔（"X 派今日未能交稿，所议三家声音"），不要花篇幅猜测原因。grades 不评未交稿者。基于已有稿件正常综合。
 

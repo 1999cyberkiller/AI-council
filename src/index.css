@@ -979,6 +979,36 @@ body {
     gap: 8px;
     flex-wrap: wrap;
   }
+  .memo-quality-strip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    border-bottom: 1px solid var(--ink-faded);
+    background: var(--paper);
+  }
+  .memo-quality-strip > div {
+    min-height: 74px;
+    padding: 12px 16px;
+    border-right: 1px solid var(--ink-faded);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+  }
+  .memo-quality-strip > div:last-child {
+    border-right: 0;
+  }
+  .memo-quality-label {
+    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.16em;
+    color: var(--ink-faded);
+  }
+  .memo-quality-strip strong {
+    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-size: 1rem;
+    line-height: 1.15;
+    color: var(--ink);
+  }
   .memo-date {
     display: inline-flex;
     align-items: center;
@@ -1014,6 +1044,7 @@ body {
     padding: 16px 18px;
   }
   .memo-field--thesis,
+  .memo-field--evidenceLog,
   .memo-field--notes {
     grid-column: 1 / -1;
   }
@@ -1043,6 +1074,8 @@ body {
     .investment-memo-head { flex-direction: column; }
     .investment-memo-actions { justify-content: flex-start; }
     .investment-memo-grid { grid-template-columns: 1fr; }
+    .memo-quality-strip { grid-template-columns: 1fr 1fr; }
+    .memo-quality-strip > div:nth-child(2n) { border-right: 0; }
   }
 
   /* ── Consensus / Dissent · 结构化对比表 ──────────────────────── */
