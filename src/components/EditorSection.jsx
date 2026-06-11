@@ -41,7 +41,6 @@ export const EditorSection = ({ state, model, voteStats, onRetry, analystProgres
 
   const verdictColor = (v) =>
     v === 'BUY' ? 'var(--buy-light)' : v === 'SELL' ? 'var(--sell-light)' : 'var(--hold-light)';
-  const verdictCN = (v) => (v === 'BUY' ? '买入' : v === 'SELL' ? '卖出' : '持有');
 
   // Item 2: progress visualization helper
   const progress = analystProgress || { done: 0, total: 4, doneAnalysts: [], pendingAnalysts: [], failedAnalysts: [] };
@@ -100,7 +99,7 @@ export const EditorSection = ({ state, model, voteStats, onRetry, analystProgres
                   border: `1.5px solid ${verdictColor(data.verdict)}`,
                   color: verdictColor(data.verdict),
                   padding: '3px 8px',
-                  fontFamily: "'Fraunces', 'Noto Serif SC', serif",
+                  fontFamily: "var(--font-display)",
                   fontWeight: 700,
                   letterSpacing: '0.12em',
                   fontSize: '0.78rem',
@@ -185,29 +184,7 @@ export const EditorSection = ({ state, model, voteStats, onRetry, analystProgres
             </div>
             {onRetry && (
               <div style={{ marginTop: 14 }}>
-                <button
-                  onClick={onRetry}
-                  style={{
-                    background: 'transparent',
-                    border: '1px solid var(--paper-dark)',
-                    color: 'var(--paper-dark)',
-                    padding: '5px 16px',
-                    fontFamily: "'Courier Prime', 'Noto Sans SC', monospace",
-                    fontSize: '0.74rem',
-                    letterSpacing: '0.16em',
-                    textTransform: 'uppercase',
-                    cursor: 'pointer',
-                    transition: 'all 0.18s',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'var(--paper)';
-                    e.currentTarget.style.color = 'var(--ink)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.color = 'var(--paper-dark)';
-                  }}
-                >
+                <button onClick={onRetry} className="retry-btn retry-btn--inverse">
                   ↻ 重新落稿 · Retry
                 </button>
               </div>
@@ -356,7 +333,7 @@ export const EditorSection = ({ state, model, voteStats, onRetry, analystProgres
                             className="body-serif"
                             style={{ fontSize: '0.96rem', lineHeight: 1.5, color: 'var(--paper)' }}
                           >
-                            <span style={{ color: 'var(--sell-light)', marginRight: 6 }}>⚡</span>
+                            <span style={{ color: 'var(--sell-light)', marginRight: 6 }}>‡</span>
                             {d.topic}
                           </div>
                           {d.root_cause && ROOT_CAUSE_CN[d.root_cause] && (
@@ -409,7 +386,7 @@ export const EditorSection = ({ state, model, voteStats, onRetry, analystProgres
                         className="body-serif"
                         style={{ fontSize: '0.92rem', color: 'var(--paper)', lineHeight: 1.5, marginLeft: 10 }}
                       >
-                        💡 {u.point}
+                        ✦ {u.point}
                       </span>
                     </div>
                   ))}

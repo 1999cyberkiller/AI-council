@@ -2,7 +2,7 @@
    HISTORY PANEL · 历史档案面板
    ────────────────────────────────────────────────────────────────── */
 
-import React, { useRef } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import { useEscToClose, useFocusTrap } from '../hooks';
 import { HISTORY_MAX } from '../lib/storage';
 
@@ -10,6 +10,16 @@ export const HistoryPanel = ({ expanded, onToggle, history, onLoad, onDelete, on
   useEscToClose(expanded, onToggle);
   const containerRef = useRef(null);
   useFocusTrap(expanded, containerRef);
+  const [filter, setFilter] = useState('');
+  const visible = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    if (!q) return history;
+    return history.filter((e) => {
+      const name = (e.stockData?.name || '').toLowerCase();
+      const code = (e.stockData?.code || e.ticker || '').toLowerCase();
+      return name.includes(q) || code.includes(q);
+    });
+  }, [history, filter]);
   if (!expanded) return null;
 
   const formatTime = (ts) => {
@@ -39,13 +49,8 @@ export const HistoryPanel = ({ expanded, onToggle, history, onLoad, onDelete, on
       <div ref={containerRef} className="modal-container" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>
-            <div className="display-serif" style={{ fontSize: '1.4rem', fontWeight: 700, lineHeight: 1.1 }}>
-              历史档案
-            </div>
-            <div
-              className="mono small-caps"
-              style={{ fontSize: '0.66rem', color: 'var(--ink-faded)', marginTop: 4 }}
-            >
+            <div className="modal-title">历史档案</div>
+            <div className="modal-subtitle">
               ARCHIVE · 历 次 议 会 记 录（最多保留 {HISTORY_MAX} 条）
             </div>
           </div>
@@ -54,44 +59,36 @@ export const HistoryPanel = ({ expanded, onToggle, history, onLoad, onDelete, on
 
         <div className="modal-body">
           {history.length === 0 ? (
-            <div
-              className="text-center body-serif"
-              style={{ padding: '40px 0', color: 'var(--ink-faded)' }}
-            >
-              <div className="ornament" style={{ marginBottom: 16, fontSize: '1.5rem' }}>❦</div>
-              <div className="display-serif" style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: 6, color: 'var(--ink-soft)' }}>
-                档案柜空空如也
-              </div>
-              <div style={{ fontSize: '0.85rem' }}>
-                完成首次分析后，会自动归档至此供日后查阅
-              </div>
+            <div className="empty-state">
+              <div className="empty-state-ornament">❦</div>
+              <div className="empty-state-title">档案柜空空如也</div>
+              <div className="empty-state-hint">完成首次分析后，会自动归档至此供日后查阅</div>
             </div>
           ) : (
             <>
-              <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div className="mono" style={{ fontSize: '0.74rem', color: 'var(--ink-soft)', letterSpacing: '0.08em' }}>
-                  共 {history.length} 条记录
-                </div>
-                <button
-                  onClick={onClearAll}
-                  style={{
-                    background: 'transparent',
-                    border: '1px solid var(--accent)',
-                    color: 'var(--accent)',
-                    padding: '4px 12px',
-                    fontFamily: "'Courier Prime', 'Noto Sans SC', monospace",
-                    fontSize: '0.7rem',
-                    letterSpacing: '0.14em',
-                    textTransform: 'uppercase',
-                    cursor: 'pointer',
-                  }}
-                >
-                  清空档案
-                </button>
+              <div style={{ marginBottom: 16, display: 'flex', gap: 14, alignItems: 'center' }}>
+                <input
+                  className="panel-filter"
+                  type="search"
+                  placeholder="筛选：名称或代码…"
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                  aria-label="筛选历史记录"
+                  style={{ flex: 1 }}
+                />
+                <span className="mono" style={{ fontSize: '0.74rem', color: 'var(--ink-soft)', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>
+                  {filter ? `${visible.length} / ${history.length} 条` : `共 ${history.length} 条`}
+                </span>
+                <button onClick={onClearAll} className="list-btn list-btn--danger">清空档案</button>
               </div>
 
+              {visible.length === 0 && (
+                <div className="empty-state" style={{ padding: '24px 0' }}>
+                  <div className="empty-state-hint">没有匹配「{filter}」的记录</div>
+                </div>
+              )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {history.map((entry) => {
+                {visible.map((entry) => {
                   const t = tally(entry);
                   const editorVerdict = entry.editorState?.data?.verdict;
                   return (
@@ -99,7 +96,7 @@ export const HistoryPanel = ({ expanded, onToggle, history, onLoad, onDelete, on
                       key={entry.id}
                       style={{
                         border: '1px solid var(--ink-faded)',
-                        background: 'rgba(255,255,255,0.25)',
+                        background: 'var(--card-bg-strong)',
                         padding: '12px 14px',
                         display: 'grid',
                         gridTemplateColumns: '1fr auto',
@@ -146,52 +143,9 @@ export const HistoryPanel = ({ expanded, onToggle, history, onLoad, onDelete, on
                       </div>
 
                       <div style={{ display: 'flex', gap: 6 }}>
-                        <button
-                          onClick={() => onLoad(entry.id)}
-                          style={{
-                            background: 'var(--ink)',
-                            color: 'var(--paper)',
-                            border: '1px solid var(--ink)',
-                            padding: '5px 12px',
-                            fontFamily: "'Courier Prime', 'Noto Sans SC', monospace",
-                            fontSize: '0.7rem',
-                            letterSpacing: '0.12em',
-                            textTransform: 'uppercase',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          查阅
-                        </button>
-                        <button
-                          onClick={() => onExport && onExport(entry.id)}
-                          style={{
-                            background: 'transparent',
-                            color: 'var(--ink-soft)',
-                            border: '1px solid var(--ink-soft)',
-                            padding: '5px 10px',
-                            fontFamily: "'Courier Prime', 'Noto Sans SC', monospace",
-                            fontSize: '0.7rem',
-                            letterSpacing: '0.08em',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          导出
-                        </button>
-                        <button
-                          onClick={() => onDelete(entry.id)}
-                          style={{
-                            background: 'transparent',
-                            color: 'var(--ink-faded)',
-                            border: '1px solid var(--ink-faded)',
-                            padding: '5px 10px',
-                            fontFamily: "'Courier Prime', 'Noto Sans SC', monospace",
-                            fontSize: '0.7rem',
-                            cursor: 'pointer',
-                          }}
-                          aria-label="删除"
-                        >
-                          ×
-                        </button>
+                        <button onClick={() => onLoad(entry.id)} className="list-btn list-btn--primary">查阅</button>
+                        <button onClick={() => onExport && onExport(entry.id)} className="list-btn">导出</button>
+                        <button onClick={() => onDelete(entry.id)} className="list-btn list-btn--quiet" aria-label="删除">×</button>
                       </div>
                     </div>
                   );

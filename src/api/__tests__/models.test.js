@@ -209,7 +209,7 @@ describe('callModel input validation', () => {
   });
 
   it('未知 variant 抛 status=0（custom model 无 modelName 时）', async () => {
-    const brokenCustom = { id: 'custom-x', name: 'X', custom: true, modelName: '', maxTokens: 0 };
+    const _brokenCustom = { id: 'custom-x', name: 'X', custom: true, modelName: '', maxTokens: 0 };
     // 触发 resolveVariant 返回 { id: '' } —— 仍然有 variant，所以这测试不适合
     // 真正的 "未找到 variant" 走在普通 model 但 variants 为空的情况
     const noVariants = { id: 'broken', name: 'Broken', custom: false, variants: [] };

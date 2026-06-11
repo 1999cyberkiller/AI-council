@@ -361,13 +361,10 @@ export const ComparePanel = ({ expanded, onToggle, tabs, history, onSelectInMain
       <div ref={containerRef} className="modal-container cmp-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>
-            <div className="display-serif" style={{ fontSize: '1.4rem', fontWeight: 700, lineHeight: 1.1 }}>
+            <div className="modal-title">
               横向对比
             </div>
-            <div
-              className="mono small-caps"
-              style={{ fontSize: '0.66rem', color: 'var(--ink-faded)', marginTop: 4 }}
-            >
+            <div className="modal-subtitle">
               CROSS · 选 {MIN_COMPARE}–{MAX_COMPARE} 只并排比较（复用已分析数据，零 API 调用）
             </div>
           </div>
@@ -470,7 +467,7 @@ export const ComparePanel = ({ expanded, onToggle, tabs, history, onSelectInMain
                       <tr key={ri} className={divergent ? 'cmp-row cmp-row--diverge' : 'cmp-row'}>
                         <td className="cmp-td-label">
                           {row.label}
-                          {divergent && <span className="cmp-diverge-mark" title="此维度跨标的取值不同">⚡</span>}
+                          {divergent && <span className="cmp-diverge-mark" title="此维度跨标的取值不同">‡</span>}
                         </td>
                         {row.cells.map((cell, ci) => (
                           <td key={ci} className="cmp-td">{cell}</td>
@@ -482,7 +479,7 @@ export const ComparePanel = ({ expanded, onToggle, tabs, history, onSelectInMain
               </table>
               <div className="cmp-footer-hint">
                 <span className="mono" style={{ fontSize: '0.7rem', color: 'var(--ink-faded)' }}>
-                  ⚡ 标记 = 跨标的取值不同的维度；这是对比最有价值的地方
+                  ‡ 标记 = 跨标的取值不同的维度；这是对比最有价值的地方
                 </span>
               </div>
             </div>

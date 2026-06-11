@@ -299,13 +299,10 @@ export const CredibilityPanel = ({
       <div ref={containerRef} className="modal-container" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>
-            <div className="display-serif" style={{ fontSize: '1.4rem', fontWeight: 700, lineHeight: 1.1 }}>
+            <div className="modal-title">
               准确率档案
             </div>
-            <div
-              className="mono small-caps"
-              style={{ fontSize: '0.66rem', color: 'var(--ink-faded)', marginTop: 4 }}
-            >
+            <div className="modal-subtitle">
               CREDIBILITY · 30 日后超额收益判定
             </div>
           </div>

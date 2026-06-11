@@ -6,10 +6,6 @@ function gt(a, b) {
   return isFiniteNumber(a) && isFiniteNumber(b) && a > b;
 }
 
-function gte(a, b) {
-  return isFiniteNumber(a) && isFiniteNumber(b) && a >= b;
-}
-
 function lt(a, b) {
   return isFiniteNumber(a) && isFiniteNumber(b) && a < b;
 }

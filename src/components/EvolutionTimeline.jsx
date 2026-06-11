@@ -9,9 +9,9 @@ import React, { useState, useMemo } from 'react';
 import { backfillStatus } from '../lib/scoring';
 
 const VERDICT_COLOR = {
-  BUY:  '#7BB89A',  // var(--buy)
-  HOLD: '#D4B26A',  // var(--hold)
-  SELL: '#D77B6A',  // var(--sell)
+  BUY:  'var(--buy)',
+  HOLD: 'var(--hold)',
+  SELL: 'var(--sell)',
 };
 const VERDICT_CN = { BUY: '买入', HOLD: '持有', SELL: '卖出' };
 
@@ -74,10 +74,10 @@ function buildSparkline(entries) {
     .join(' ');
 }
 
-const TimelineNode = ({ entry, idx, total, expanded, onToggle }) => {
+const TimelineNode = ({ entry, idx, expanded, onToggle }) => {
   const v = entry.editorState?.data?.verdict;
   const conviction = entry.editorState?.data?.conviction || 3;
-  const color = VERDICT_COLOR[v] || '#888';
+  const color = VERDICT_COLOR[v] || 'var(--ink-faded)';
   const size = markerSize(conviction);
   const headline = entry.editorState?.data?.headline || '主编未交稿';
   const keySent = entry.editorState?.data?.key_sentence;
@@ -252,7 +252,6 @@ export const EvolutionTimeline = ({ history, ticker, onLoadEntry, mode = 'compac
             key={e.id}
             entry={e}
             idx={idx}
-            total={entries.length}
             expanded={expandedIds.has(e.id)}
             onToggle={() => toggle(e.id)}
           />

@@ -42,7 +42,7 @@ const AnswerCard = ({ answer }) => {
         <span className="fa-answer-meta">
           {shifted && (
             <span className="fa-shift-badge" title={`立场调整为 ${VERDICT_LABEL[d.stance_shift] || d.stance_shift}`}>
-              ⚡ 立场调整 → {d.stance_shift}
+              ※ 立场调整 → {d.stance_shift}
             </span>
           )}
           <span className="fa-confidence">信心 {d.confidence}/5</span>

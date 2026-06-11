@@ -14,13 +14,6 @@ export const AnalystColumn = ({ analyst, model, state, klineData, klineLoading, 
   const data = state?.data;
   const showKline = analyst.id === 'tech';
 
-  // Calculate progress for bar
-  const totalStages = analyst.stages.length + 1;
-  let progress = 0;
-  if (isPending) progress = 25 + Math.random() * 30; // approximate, will be updated by feed
-  if (isDone) progress = 100;
-  if (isError) progress = 0;
-
   return (
     <div className="fade-up">
       {/* Section label with model name on right */}
@@ -120,13 +113,7 @@ export const AnalystColumn = ({ analyst, model, state, klineData, klineLoading, 
           />
           {isPending && (
             <div className="progress-bar">
-              <div
-                className="progress-fill"
-                style={{
-                  width: `${progress}%`,
-                  animation: 'progressBreathe 2.5s ease-in-out infinite',
-                }}
-              />
+              <div className="progress-fill progress-fill--indeterminate" />
             </div>
           )}
         </>

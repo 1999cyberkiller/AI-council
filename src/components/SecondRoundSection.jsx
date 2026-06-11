@@ -130,7 +130,7 @@ export const SecondRoundSection = ({ secondRound }) => {
                       />
                       {topic.editorFinal.data.shifted && (
                         <span className="sr-shifted-badge" title={topic.editorFinal.data.shift_reason || ''}>
-                          ⚡ 立场调整
+                          ※ 立场调整
                         </span>
                       )}
                     </div>

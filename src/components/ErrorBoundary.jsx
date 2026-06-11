@@ -29,7 +29,7 @@ export class ErrorBoundary extends React.Component {
       return (
         <div style={{
           padding: '24px 28px',
-          fontFamily: "'EB Garamond', 'Noto Serif SC', serif",
+          fontFamily: "var(--font-body)",
           color: 'var(--ink)',
           background: 'var(--paper)',
           minHeight: 200,
@@ -47,8 +47,8 @@ export class ErrorBoundary extends React.Component {
           </div>
           <pre style={{
             fontSize: '0.74rem',
-            fontFamily: "'Courier Prime', monospace",
-            background: 'rgba(0,0,0,0.05)',
+            fontFamily: "var(--font-mono)",
+            background: 'var(--wash)',
             border: '1px dashed var(--ink-faded)',
             padding: '10px 12px',
             color: 'var(--ink-soft)',

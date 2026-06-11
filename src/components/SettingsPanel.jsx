@@ -2,7 +2,7 @@
    SETTINGS PANEL · 编辑部配置面板
    ────────────────────────────────────────────────────────────────── */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useEscToClose, useFocusTrap } from '../hooks';
 import { ANALYSTS } from '../lib/prompts';
 
@@ -72,15 +72,8 @@ export const SettingsPanel = ({
       <div ref={containerRef} className="modal-container" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>
-            <div className="display-serif" style={{ fontSize: '1.4rem', fontWeight: 700, lineHeight: 1.1 }}>
-              编辑部配置
-            </div>
-            <div
-              className="mono small-caps"
-              style={{ fontSize: '0.66rem', color: 'var(--ink-faded)', marginTop: 4 }}
-            >
-              EDITORIAL SETUP · MODELS &amp; DATA
-            </div>
+            <div className="modal-title">编辑部配置</div>
+            <div className="modal-subtitle">EDITORIAL SETUP · MODELS &amp; DATA</div>
           </div>
           <div className="flex items-center gap-3">
             {/* 自动保存状态指示器 */}
@@ -114,18 +107,7 @@ export const SettingsPanel = ({
         <div className="modal-body">
           {/* Section: Model API Keys */}
           <div style={{ marginBottom: 24 }}>
-            <div
-              className="small-caps mono"
-              style={{
-                fontSize: '0.72rem',
-                color: 'var(--ink-soft)',
-                marginBottom: 12,
-                paddingBottom: 6,
-                borderBottom: '1px solid var(--ink-faded)',
-              }}
-            >
-              ◆ MODEL API KEYS · 模 型 接 入 凭 据
-            </div>
+            <div className="settings-section-head">◆ MODEL API KEYS · 模 型 接 入 凭 据</div>
             <div
               className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4"
               style={{ marginBottom: 12 }}
@@ -156,7 +138,7 @@ export const SettingsPanel = ({
                           color: 'var(--accent)',
                           cursor: 'pointer',
                           fontSize: '0.7rem',
-                          fontFamily: "'Courier Prime', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', monospace",
+                          fontFamily: "var(--font-mono)",
                           letterSpacing: '0.1em',
                         }}
                       >
@@ -223,7 +205,7 @@ export const SettingsPanel = ({
                 style={{
                   padding: 14,
                   border: '1px dashed var(--ink-faded)',
-                  background: 'rgba(0,0,0,0.02)',
+                  background: 'var(--wash)',
                 }}
               >
                 <div
@@ -299,18 +281,7 @@ export const SettingsPanel = ({
 
           {/* Section: Analyst-Model Assignment */}
           <div style={{ marginBottom: 24 }}>
-            <div
-              className="small-caps mono"
-              style={{
-                fontSize: '0.72rem',
-                color: 'var(--ink-soft)',
-                marginBottom: 12,
-                paddingBottom: 6,
-                borderBottom: '1px solid var(--ink-faded)',
-              }}
-            >
-              ◆ COLUMNIST DESK ASSIGNMENT · 专 栏 与 模 型 配 对
-            </div>
+            <div className="settings-section-head">◆ COLUMNIST DESK ASSIGNMENT · 专 栏 与 模 型 配 对</div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {ANALYSTS.map((a) => (
                 <div key={a.id} className="data-card" style={{ padding: '10px 12px' }}>
@@ -389,18 +360,7 @@ export const SettingsPanel = ({
 
           {/* Section: Financial Data */}
           <div>
-            <div
-              className="small-caps mono"
-              style={{
-                fontSize: '0.72rem',
-                color: 'var(--ink-soft)',
-                marginBottom: 12,
-                paddingBottom: 6,
-                borderBottom: '1px solid var(--ink-faded)',
-              }}
-            >
-              ◆ FINANCIAL DATA · 行 情 数 据 源
-            </div>
+            <div className="settings-section-head">◆ FINANCIAL DATA · 行 情 数 据 源</div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
               <div>
                 <label
@@ -507,36 +467,11 @@ export const SettingsPanel = ({
               高级设置
             </div>
 
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 12,
-                padding: '12px 14px',
-                background: 'rgba(240, 232, 214, 0.4)',
-                border: '1px solid var(--ink-faded)',
-                cursor: 'pointer',
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(240, 232, 214, 0.7)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(240, 232, 214, 0.4)';
-              }}
-            >
+            <label className="settings-toggle-card">
               <input
                 type="checkbox"
                 checked={!!personaSignalsEnabled}
                 onChange={(e) => onPersonaSignalsToggle && onPersonaSignalsToggle(e.target.checked)}
-                style={{
-                  marginTop: 3,
-                  width: 16,
-                  height: 16,
-                  cursor: 'pointer',
-                  accentColor: 'var(--accent)',
-                  flexShrink: 0,
-                }}
               />
               <div style={{ flex: 1 }}>
                 <div
@@ -592,7 +527,7 @@ export const SettingsPanel = ({
                   border: '1px solid var(--accent)',
                   color: 'var(--accent)',
                   padding: '5px 14px',
-                  fontFamily: "'Courier Prime', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', monospace",
+                  fontFamily: "var(--font-mono)",
                   fontSize: '0.72rem',
                   letterSpacing: '0.14em',
                   textTransform: 'uppercase',

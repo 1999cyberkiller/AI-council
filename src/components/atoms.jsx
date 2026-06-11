@@ -8,9 +8,7 @@
    ────────────────────────────────────────────────────────────────── */
 
 import React, { useState, useEffect } from 'react';
-import {
-  STY_RETRY_BTN_BASE, STY_ERR_LINE, STY_ERR_RAW, STY_DISCLOSURE_BTN,
-} from '../lib/styles';
+import { STY_ERR_LINE, STY_ERR_RAW, STY_DISCLOSURE_BTN } from '../lib/styles';
 
 export const Stars = ({ count, total = 5 }) => (
   <span className="mono" style={{ fontSize: '0.95rem' }}>
@@ -133,18 +131,7 @@ export const WireFeedError = ({ errorMsg, rawPreview, onRetry, availableModels, 
       )}
       <div style={{ marginTop: 12, paddingLeft: 24, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
         {onRetry && (
-          <button
-            onClick={onRetry}
-            style={STY_RETRY_BTN_BASE}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'var(--accent)';
-              e.currentTarget.style.color = 'var(--paper)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.color = 'var(--accent)';
-            }}
-          >
+          <button onClick={onRetry} className="retry-btn">
             ↻ 重新撰稿
           </button>
         )}
@@ -152,15 +139,7 @@ export const WireFeedError = ({ errorMsg, rawPreview, onRetry, availableModels, 
           <div style={{ position: 'relative' }}>
             <button
               onClick={() => setShowModelMenu((s) => !s)}
-              style={STY_RETRY_BTN_BASE}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'var(--ink)';
-                e.currentTarget.style.color = 'var(--paper)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = 'var(--accent)';
-              }}
+              className="retry-btn retry-btn--ink"
               aria-haspopup="true"
               aria-expanded={showModelMenu}
             >

@@ -8,9 +8,9 @@
 import React from 'react';
 
 const ICONS = {
-  earnings: '📊',
-  dividend: '💰',
-  lockup: '🔓',
+  earnings: '†',
+  dividend: '¤',
+  lockup: '‡',
 };
 
 const TYPE_CN = {
@@ -19,7 +19,7 @@ const TYPE_CN = {
   lockup: '解禁',
 };
 
-function formatDaysUntil(days, type) {
+function formatDaysUntil(days) {
   if (days == null) return null;
   if (days === 0) return '今天';
   if (days === 1) return '明天';
@@ -34,7 +34,7 @@ function urgencyClass(days) {
   return 'ev-far';                     // >14 天，淡灰
 }
 
-export const EventsBadge = ({ eventsData, consensusData, finnhubKeyConfigured }) => {
+export const EventsBadge = ({ eventsData, consensusData }) => {
   const hasEvents = eventsData && Array.isArray(eventsData.events) && eventsData.events.length > 0;
   const hasConsensus = consensusData && consensusData.data;
   const market = eventsData?.market || consensusData?.data?.market;
@@ -74,7 +74,7 @@ export const EventsBadge = ({ eventsData, consensusData, finnhubKeyConfigured })
         if (c.latestDate) titleParts.push(`最新评级 ${c.latestDate}`);
         return (
           <span className={`ev-item ${tone}`} title={titleParts.join(' · ')}>
-            <span className="ev-icon">📈</span>
+            <span className="ev-icon">◆</span>
             <span className="ev-type">共识</span>
             <span className="ev-when">{c.overallLabel || '—'}{upsidePart}</span>
           </span>
@@ -85,7 +85,7 @@ export const EventsBadge = ({ eventsData, consensusData, finnhubKeyConfigured })
       {hasEvents && eventsData.events.map((ev, i) => {
         const urgent = urgencyClass(ev.daysUntil);
         const cn = TYPE_CN[ev.type] || ev.type;
-        const timeLabel = formatDaysUntil(ev.daysUntil, ev.type);
+        const timeLabel = formatDaysUntil(ev.daysUntil);
         const dateLabel = ev.date ? ` · ${ev.date}` : '';
         return (
           <span key={`${ev.type}-${i}`} className={`ev-item ${urgent}`} title={`${ev.label || cn}${dateLabel}`}>

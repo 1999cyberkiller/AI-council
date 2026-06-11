@@ -144,7 +144,7 @@ async function fetchUSStockData(symbol, alphaKey) {
   const overviewD = await overviewR.json();
   const q = quoteD['Global Quote'];
   if (!q || !q['05. price']) {
-    if (quoteD.Note) throw new Error('Alpha Vantage 频率限制（免费层 25/日）');
+    if (quoteD.Note || quoteD.Information) throw new Error('Alpha Vantage 频率限制（免费层 25/日）');
     throw new Error(`未找到美股代码 ${sym}`);
   }
   const num = (s) => (s == null || s === 'None' || s === '-' ? null : parseFloat(s));
@@ -255,7 +255,7 @@ async function fetchUSKline(symbol, alphaKey, days = 100) {
   const d = await r.json();
   const series = d['Time Series (Daily)'];
   if (!series) {
-    if (d.Note) throw new Error('Alpha Vantage 频率限制');
+    if (d.Note || d.Information) throw new Error('Alpha Vantage 频率限制（免费层 25/日）');
     throw new Error(`未取到 ${sym} 的历史数据`);
   }
   const rows = Object.entries(series)
@@ -353,7 +353,7 @@ async function fetchBenchmarkSpotUncached(market, alphaKey) {
   const d = await r.json();
   const q = d['Global Quote'];
   if (!q || !q['05. price']) {
-    if (d.Note) throw new Error('Alpha Vantage 频率限制');
+    if (d.Note || d.Information) throw new Error('Alpha Vantage 频率限制（免费层 25/日）');
     throw new Error('SPY 行情获取失败');
   }
   return {

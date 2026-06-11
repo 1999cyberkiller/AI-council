@@ -89,6 +89,29 @@ export default function App() {
   const [credibilityOpen, setCredibilityOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
   const [evolutionOpen, setEvolutionOpen] = useState(false);
+  const tickerInputRef = useRef(null);
+
+  /* ── Esc 关闭演化弹窗（与其他面板一致）─────────────────── */
+  useEffect(() => {
+    if (!evolutionOpen) return;
+    const onKey = (e) => { if (e.key === 'Escape') setEvolutionOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [evolutionOpen]);
+
+  /* ── 快捷键：按 / 聚焦问询输入框 ─────────────────────────── */
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return;
+      const t = e.target;
+      const tag = t?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || t?.isContentEditable) return;
+      e.preventDefault();
+      tickerInputRef.current?.focus();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   /* ── 准确率回填 ────────────────────────────────────────── */
   const [backfillState, setBackfillState] = useState('idle');
@@ -390,7 +413,8 @@ export default function App() {
   }, [actions]);
 
   const handleSummonStock = useCallback((code) => {
-    if (!code || session.phase === 'fetching' || session.phase === 'analysts') return;
+    const busy = ['fetching', 'analysts', 'editor'].includes(session.phase);
+    if (!code || busy) return;
     handleSubmitWith(code);
   }, [session.phase, handleSubmitWith]);
 
@@ -610,7 +634,7 @@ export default function App() {
   };
 
   /* ── 准确率回填 ────────────────────────────────────────── */
-  const backfillSingleEntry = async (entry) => {
+  const backfillSingleEntry = useCallback(async (entry) => {
     if (!entry || !entry.timestamp) throw new Error('条目缺少时间戳');
     if (!entry.priceAt0 || typeof entry.priceAt0 !== 'number') throw new Error('缺少初始价格');
     if (!entry.marketBaseline || typeof entry.marketBaseline.price !== 'number') throw new Error('缺少基准指数初始值');
@@ -673,7 +697,7 @@ export default function App() {
       stockReturnWorstPct: Number(stockWorstPct.toFixed(2)),
       windowSpreadPct: Number((stockBestPct - stockWorstPct).toFixed(2)),
     };
-  };
+  }, [alphaKey]);
 
   const backfillDueEntries = useCallback(async (opts = {}) => {
     const { maxPerRun = 6, force = false } = opts;
@@ -712,7 +736,7 @@ export default function App() {
     setBackfillProgress(null);
     appendEvent({ type: 'backfill_run', ran: batch.length, ok, failed });
     return { ran: batch.length, ok, failed, remaining: due.length - batch.length };
-  }, [history, alphaKey, backfillState]);
+  }, [history, backfillState, backfillSingleEntry]);
 
   useEffect(() => {
     if (history.length === 0) return;
@@ -823,6 +847,12 @@ export default function App() {
   const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
   const handlePrint = () => window.print();
 
+  /* ── 同步 <meta name="theme-color">，让移动端状态栏跟随主题 ── */
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', theme === 'dark' ? '#1B1612' : '#F0E8D6');
+  }, [theme]);
+
   const running = session.phase === 'fetching' || session.phase === 'analysts' || session.phase === 'editor';
   const submittedTicker = session.ticker;
   const today = new Date();
@@ -879,10 +909,10 @@ export default function App() {
             <div className="modal-container" style={{ maxWidth: 820 }} onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
                 <div>
-                  <div className="display-serif" style={{ fontSize: '1.4rem', fontWeight: 700, lineHeight: 1.1 }}>
+                  <div className="modal-title">
                     {session.stockData.name} · 演化时间线
                   </div>
-                  <div className="mono small-caps" style={{ fontSize: '0.66rem', color: 'var(--ink-faded)', marginTop: 4 }}>
+                  <div className="modal-subtitle">
                     EVOLUTION · {session.stockData.code}
                   </div>
                 </div>
@@ -968,53 +998,59 @@ export default function App() {
             </div>
           </header>
 
-          <section style={{ marginBottom: '32px', padding: '28px 32px', border: '1.5px solid var(--ink)', background: 'rgba(255,255,255,0.18)', boxShadow: '6px 6px 0 var(--ink-faded)' }}>
+          <section style={{ marginBottom: '32px', padding: '28px 32px', border: '1.5px solid var(--ink)', background: 'var(--card-bg)', boxShadow: '6px 6px 0 var(--ink-faded)' }}>
             <div className="flex flex-col md:flex-row items-stretch md:items-end gap-5">
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="small-caps mono" style={{ fontSize: '0.74rem', letterSpacing: '0.22em', color: 'var(--ink-soft)', marginBottom: '8px' }}>
                   ◆ TODAY'S SUBJECT OF INQUIRY · 本 期 问 询 主 题
                 </div>
                 <input
+                  ref={tickerInputRef}
                   className="input-field display-serif"
                   type="text"
                   placeholder="输入：600519 / 贵州茅台 / AAPL / NVDA ..."
                   value={tickerInput}
                   onChange={(e) => setTickerInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+                  onKeyDown={(e) => {
+                    // 中文输入法组合中按 Enter 是在确认候选词，不应触发提交
+                    if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleSubmit();
+                  }}
                   disabled={running}
+                  aria-label="股票代码或名称"
                 />
               </div>
               <button
                 className="btn-primary small-caps"
                 onClick={handleSubmit}
                 disabled={running || !tickerInput.trim()}
+                aria-busy={running}
                 style={{ position: 'relative', overflow: 'hidden' }}
               >
-                {running ? (
-                  <>
-                    <span style={{ position: 'relative', zIndex: 2 }}>
-                      议程进行中… {(() => {
-                        const done = ANALYSTS.filter((a) => session.analyses[a.id]?.status === 'done').length;
-                        return `${done}/${ANALYSTS.length}`;
-                      })()}
-                    </span>
-                    <span
-                      aria-hidden="true"
-                      style={{
-                        position: 'absolute', left: 0, top: 0, bottom: 0,
-                        width: `${(ANALYSTS.filter((a) => session.analyses[a.id]?.status === 'done').length / ANALYSTS.length) * 100}%`,
-                        background: 'rgba(139, 45, 31, 0.55)',
-                        transition: 'width 0.4s ease',
-                        zIndex: 1,
-                      }}
-                    />
-                  </>
-                ) : '召集议会 →'}
+                {running ? (() => {
+                  const done = ANALYSTS.filter((a) => session.analyses[a.id]?.status === 'done').length;
+                  return (
+                    <>
+                      <span style={{ position: 'relative', zIndex: 2 }}>
+                        议程进行中… {done}/{ANALYSTS.length}
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          position: 'absolute', left: 0, top: 0, bottom: 0,
+                          width: `${(done / ANALYSTS.length) * 100}%`,
+                          background: 'rgba(139, 45, 31, 0.55)',
+                          transition: 'width 0.4s ease',
+                          zIndex: 1,
+                        }}
+                      />
+                    </>
+                  );
+                })() : '召集议会 →'}
               </button>
             </div>
             <div className="body-serif" style={{ fontSize: '0.78rem', color: 'var(--ink-faded)', marginTop: '14px', lineHeight: 1.55 }}>
               支持 A 股代码 (600519) / A 股名称 (贵州茅台) / 美股代码 (AAPL)。
-              系统将先抓取实时行情，再让四位作者分别撰稿。
+              系统将先抓取实时行情，再让四位作者分别撰稿。按 <span className="mono" style={{ border: '1px solid var(--ink-faded)', padding: '0 5px', fontSize: '0.72rem' }}>/</span> 可随时聚焦此输入框。
             </div>
             {session.stockError && (
               <div className="mono" style={{ fontSize: '0.85rem', color: 'var(--accent)', marginTop: 12, padding: '8px 12px', border: '1px solid var(--accent)', background: 'rgba(139, 45, 31, 0.06)' }}>
@@ -1035,7 +1071,14 @@ export default function App() {
                   <span
                     className="symbol-tab-close"
                     role="button"
+                    tabIndex={0}
+                    aria-label={`关闭 ${tab.stockData?.name || tab.ticker}`}
                     onClick={(e) => { e.stopPropagation(); closeTab(tab.id); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault(); e.stopPropagation(); closeTab(tab.id);
+                      }
+                    }}
                   >
                     ×
                   </span>
@@ -1060,11 +1103,7 @@ export default function App() {
           )}
 
           {session.stockData && (session.eventsData || session.consensusData) && (
-            <EventsBadge
-              eventsData={session.eventsData}
-              consensusData={session.consensusData}
-              finnhubKeyConfigured={!!finnhubKey}
-            />
+            <EventsBadge eventsData={session.eventsData} consensusData={session.consensusData} />
           )}
 
           {submittedTicker && session.stockData && (
@@ -1085,24 +1124,14 @@ export default function App() {
               <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
                 <button
                   onClick={toggleWatchlist}
-                  style={{
-                    background: isInWatchlist(session.stockData.code) ? 'var(--accent)' : 'transparent',
-                    color: isInWatchlist(session.stockData.code) ? 'var(--paper)' : 'var(--accent)',
-                    border: '1px solid var(--accent)', padding: '5px 14px',
-                    fontFamily: "'Fraunces', 'Noto Serif SC', serif", fontSize: '0.85rem',
-                    cursor: 'pointer', transition: 'all 0.18s',
-                  }}
+                  className={`subject-action-btn ${isInWatchlist(session.stockData.code) ? 'subject-action-btn--active' : 'subject-action-btn--accent'}`}
                   title={isInWatchlist(session.stockData.code) ? '从自选股移除' : '加入自选股'}
                 >
                   {isInWatchlist(session.stockData.code) ? '★ 已收藏' : '☆ 加入自选'}
                 </button>
                 <button
                   onClick={handlePrint}
-                  style={{
-                    background: 'transparent', color: 'var(--ink-soft)', border: '1px solid var(--ink-soft)',
-                    padding: '5px 14px', fontFamily: "'Fraunces', 'Noto Serif SC', serif", fontSize: '0.85rem',
-                    cursor: 'pointer', transition: 'all 0.18s',
-                  }}
+                  className="subject-action-btn"
                   title="导出为 PDF（浏览器打印 → 选择保存为 PDF）"
                 >
                   ⎙ 导出 PDF
@@ -1260,7 +1289,7 @@ export default function App() {
                   const model = models.find((m) => m.id === assignments[a.id]);
                   const hasKey = model && apiKeys[model.id];
                   return (
-                    <div key={a.id} style={{ padding: '14px 12px', border: '1px solid var(--ink-faded)', background: 'rgba(255,255,255,0.18)' }}>
+                    <div key={a.id} style={{ padding: '14px 12px', border: '1px solid var(--ink-faded)', background: 'var(--card-bg)' }}>
                       <div className="display-serif" style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--ink-soft)' }}>{a.monogram}</div>
                       <div className="display-serif" style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--ink)', marginTop: '2px' }}>{a.cnName}</div>
                       <div className="mono" style={{ fontSize: '0.7rem', color: hasKey ? 'var(--buy)' : 'var(--ink-faded)', marginTop: '6px', letterSpacing: '0.08em' }}>

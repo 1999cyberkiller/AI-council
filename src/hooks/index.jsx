@@ -71,7 +71,7 @@ export function useConfirm() {
                 border: '1px solid var(--ink-faded)',
                 color: 'var(--ink-soft)',
                 padding: '7px 18px',
-                fontFamily: "'Fraunces', 'Noto Serif SC', serif",
+                fontFamily: "var(--font-display)",
                 fontSize: '0.9rem',
                 cursor: 'pointer',
               }}
@@ -86,7 +86,7 @@ export function useConfirm() {
                 color: 'var(--paper)',
                 border: `1px solid ${state.danger ? 'var(--accent)' : 'var(--ink)'}`,
                 padding: '7px 18px',
-                fontFamily: "'Fraunces', 'Noto Serif SC', serif",
+                fontFamily: "var(--font-display)",
                 fontSize: '0.9rem',
                 cursor: 'pointer',
                 fontWeight: 600,
@@ -136,7 +136,7 @@ export function useFocusTrap(isOpen, containerRef) {
     const list = focusables();
     if (list.length > 0) {
       const firstNonClose = list.find((el) => !el.classList?.contains('modal-close')) || list[0];
-      try { firstNonClose.focus(); } catch {}
+      try { firstNonClose.focus(); } catch { /* 元素可能已卸载 */ }
     }
 
     const onKey = (e) => {
@@ -161,7 +161,7 @@ export function useFocusTrap(isOpen, containerRef) {
     return () => {
       container.removeEventListener('keydown', onKey);
       if (previouslyFocused && previouslyFocused.focus) {
-        try { previouslyFocused.focus(); } catch {}
+        try { previouslyFocused.focus(); } catch { /* 元素可能已卸载 */ }
       }
     };
   }, [isOpen, containerRef]);

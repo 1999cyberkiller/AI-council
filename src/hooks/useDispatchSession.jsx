@@ -336,7 +336,7 @@ export function useDispatchSession({
 
   const abortAllInFlight = useCallback(() => {
     activeControllersRef.current.forEach((c) => {
-      try { c.abort(); } catch {}
+      try { c.abort(); } catch { /* 控制器可能已结束 */ }
     });
     activeControllersRef.current.clear();
   }, []);

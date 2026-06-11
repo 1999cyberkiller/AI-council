@@ -169,7 +169,7 @@ export const CandlestickChart = ({ klines, market, currentRange = 90, onRangeCha
             y={t.y + 3}
             textAnchor="end"
             fontSize="8"
-            fontFamily="'Courier Prime', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', monospace"
+            fontFamily="var(--font-mono)"
             fill="var(--ink-faded)"
           >
             {t.v.toFixed(market === 'A' ? 2 : 2)}
@@ -184,7 +184,7 @@ export const CandlestickChart = ({ klines, market, currentRange = 90, onRangeCha
             y={height - 5}
             textAnchor="middle"
             fontSize="8"
-            fontFamily="'Courier Prime', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', monospace"
+            fontFamily="var(--font-mono)"
             fill="var(--ink-faded)"
           >
             {t.label}
@@ -281,7 +281,7 @@ export const CandlestickChart = ({ klines, market, currentRange = 90, onRangeCha
               y={yScale(hoverK.close) + 3}
               textAnchor="middle"
               fontSize="8"
-              fontFamily="'Courier Prime', monospace"
+              fontFamily="var(--font-mono)"
               fill="var(--paper)"
               fontWeight="700"
             >
@@ -299,21 +299,21 @@ export const CandlestickChart = ({ klines, market, currentRange = 90, onRangeCha
               strokeWidth="0.7"
               opacity="0.97"
             />
-            <text x={tipX + tipPad + 2} y={tipY + 11} fontSize="8.5" fontFamily="'Fraunces', serif" fontWeight="700" fill="var(--ink)">
+            <text x={tipX + tipPad + 2} y={tipY + 11} fontSize="8.5" fontFamily="var(--font-display)" fontWeight="700" fill="var(--ink)">
               {hoverK.date}
             </text>
-            <text x={tipX + tipPad + 2} y={tipY + 22} fontSize="7.5" fontFamily="'Courier Prime', monospace" fill="var(--ink-soft)">
+            <text x={tipX + tipPad + 2} y={tipY + 22} fontSize="7.5" fontFamily="var(--font-mono)" fill="var(--ink-soft)">
               开 <tspan fill="var(--ink)" fontWeight="700">{hoverK.open.toFixed(2)}</tspan>
               <tspan dx="6">高</tspan> <tspan fill="var(--buy)" fontWeight="700">{hoverK.high.toFixed(2)}</tspan>
             </text>
-            <text x={tipX + tipPad + 2} y={tipY + 32} fontSize="7.5" fontFamily="'Courier Prime', monospace" fill="var(--ink-soft)">
+            <text x={tipX + tipPad + 2} y={tipY + 32} fontSize="7.5" fontFamily="var(--font-mono)" fill="var(--ink-soft)">
               收 <tspan fill={hoverK.close >= hoverK.open ? 'var(--buy)' : 'var(--sell)'} fontWeight="700">{hoverK.close.toFixed(2)}</tspan>
               <tspan dx="6">低</tspan> <tspan fill="var(--sell)" fontWeight="700">{hoverK.low.toFixed(2)}</tspan>
             </text>
-            <text x={tipX + tipPad + 2} y={tipY + 42} fontSize="7.5" fontFamily="'Courier Prime', monospace" fill="var(--ink-soft)">
+            <text x={tipX + tipPad + 2} y={tipY + 42} fontSize="7.5" fontFamily="var(--font-mono)" fill="var(--ink-soft)">
               MA20 <tspan fill="var(--ink)" fontWeight="700">{hoverK.ma20 != null ? hoverK.ma20.toFixed(2) : '—'}</tspan>
             </text>
-            <text x={tipX + tipPad + 2} y={tipY + 52} fontSize="7.5" fontFamily="'Courier Prime', monospace" fill="var(--ink-soft)">
+            <text x={tipX + tipPad + 2} y={tipY + 52} fontSize="7.5" fontFamily="var(--font-mono)" fill="var(--ink-soft)">
               MA60 <tspan fill="var(--accent)" fontWeight="700">{hoverK.ma60 != null ? hoverK.ma60.toFixed(2) : '—'}</tspan>
             </text>
           </g>

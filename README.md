@@ -27,16 +27,20 @@
 
 ```
 analysts-dispatch/
-├── deploy.sh              # VPS 一键部署（含 Basic Auth）
-├── index.html             # 入口
-├── package.json
-├── postcss.config.js
-├── tailwind.config.js
-├── vite.config.js
+├── deploy.sh                  # VPS 一键部署（含 Basic Auth）
+├── index.html                 # 入口（含字体 preconnect 与元信息）
+├── public/favicon.svg         # 报纸风格站点图标
+├── server/
+│   ├── model-proxy.mjs        # 模型/行情同源代理（限流 + 脱敏 + 安全头）
+│   └── sites-worker.mjs
 ├── src/
-│   ├── App.jsx            # 主应用
-│   ├── index.css          # Tailwind 入口
-│   └── main.jsx           # React 挂载
+│   ├── App.jsx                # 主应用（布局 + 持久化 + 各面板编排）
+│   ├── index.css              # 设计系统（--font-* / --card-bg 等令牌 + 全部组件样式）
+│   ├── api/                   # 行情、K 线、事件、财务、共识、新闻、主题轮动、模型适配
+│   ├── components/            # 分析师专栏、主编札记、各面板与徽章
+│   ├── hooks/                 # useDispatchSession 状态机 + 通用 hooks
+│   ├── lib/                   # 提示词、解析器、评分、存储、缓存、预热
+│   └── quant/                 # QVMR 交易纪律打分
 └── README.md
 ```
 

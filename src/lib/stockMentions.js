@@ -113,11 +113,6 @@ export function tokenizeWithMentions(text, dict) {
     }
 
     if (matched) {
-      // push 已经累积的 text
-      const pendingStart = tokens.length > 0 && tokens[tokens.length - 1].type === 'mention'
-        ? tokens.findLastIndex((t) => t.type === 'mention') + 1
-        : 0;
-      // mention
       tokens.push({
         type: 'mention',
         value: text.substr(cursor, matched.length),

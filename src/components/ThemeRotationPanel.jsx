@@ -12,9 +12,12 @@ const stateClass = (state) => {
 };
 
 export const ThemeRotationPanel = ({ snapshot }) => {
-  const themes = Array.isArray(snapshot?.themes) ? snapshot.themes : [];
+  const themes = useMemo(
+    () => (Array.isArray(snapshot?.themes) ? snapshot.themes : []),
+    [snapshot]
+  );
   const leaders = useMemo(
-    () => themes
+    () => [...themes]
       .filter((t) => t.available && typeof t.score === 'number')
       .sort((a, b) => b.score - a.score)
       .slice(0, 3),

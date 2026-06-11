@@ -32,7 +32,7 @@ function cacheSet(key, value) {
   try {
     if (typeof window === 'undefined') return;
     window.sessionStorage.setItem(EVENTS_CACHE_PREFIX + key, JSON.stringify({ t: Date.now(), v: value }));
-  } catch {}
+  } catch { /* 静默降级 */ }
 }
 
 // ── 工具：把 'YYYY-MM-DD' 或 ISO 转成相对天数 ──

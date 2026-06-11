@@ -34,6 +34,17 @@ body {
     --hold-light:   #D4B26A;
     --sell:         #8B2D1F;
     --sell-light:   #D77B6A;
+
+    /* 统一字体令牌：全站只允许引用这三个 */
+    --font-display: 'Fraunces', 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
+    --font-body:    'EB Garamond', 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', Georgia, serif;
+    --font-mono:    'Courier Prime', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', monospace;
+
+    /* 统一表面色令牌：卡片/水洗底，亮暗两套各自取值 */
+    --card-bg:        var(--card-bg);
+    --card-bg-strong: var(--card-bg-strong);
+    --wash:           var(--wash);
+    --wash-strong:    rgba(26, 20, 14, 0.08);
   }
 
   /* 暗色模式：深炭底 + 米色字 + 酒红依旧 */
@@ -53,6 +64,11 @@ body {
     --hold-light:   #ECCB7B;
     --sell:         #DE6A52;
     --sell-light:   #ED8773;
+
+    --card-bg:        rgba(255, 255, 255, 0.045);
+    --card-bg-strong: rgba(255, 255, 255, 0.08);
+    --wash:           rgba(234, 224, 200, 0.05);
+    --wash-strong:    rgba(234, 224, 200, 0.1);
   }
   .dispatch-root[data-theme="dark"]::before {
     background-image:
@@ -67,7 +83,7 @@ body {
   .dispatch-root {
     background-color: var(--paper);
     color: var(--ink);
-    font-family: 'EB Garamond', 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', Georgia, serif;
+    font-family: var(--font-body);
     min-height: 100vh;
     position: relative;
     overflow-x: hidden;
@@ -89,9 +105,9 @@ body {
   }
   .dispatch-content { position: relative; z-index: 1; }
 
-  .display-serif { font-family: 'Fraunces', 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif; font-feature-settings: 'ss01', 'ss02'; }
-  .body-serif { font-family: 'EB Garamond', 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', Georgia, serif; }
-  .mono { font-family: 'Courier Prime', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', monospace; }
+  .display-serif { font-family: var(--font-display); font-feature-settings: 'ss01', 'ss02'; }
+  .body-serif { font-family: var(--font-body); }
+  .mono { font-family: var(--font-mono); }
   .small-caps { font-variant: small-caps; letter-spacing: 0.18em; }
   .ornament { color: var(--rule); letter-spacing: 0.45em; }
 
@@ -100,7 +116,7 @@ body {
     background: transparent;
     border: none;
     border-bottom: 2px solid var(--ink);
-    font-family: 'Fraunces', 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
+    font-family: var(--font-display);
     font-size: 1.55rem;
     color: var(--ink);
     outline: none;
@@ -112,7 +128,7 @@ body {
   .input-field::placeholder { color: var(--ink-faded); font-size: 1.05rem; }
 
   .btn-primary {
-    font-family: 'Fraunces', 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
+    font-family: var(--font-display);
     font-weight: 600;
     background: var(--ink);
     color: var(--paper);
@@ -131,7 +147,7 @@ body {
   .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
 
   .btn-ghost {
-    font-family: 'Courier Prime', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', monospace;
+    font-family: var(--font-mono);
     background: transparent;
     color: var(--ink);
     border: 1px solid var(--ink-soft);
@@ -144,6 +160,189 @@ body {
   }
   .btn-ghost:hover { background: var(--ink); color: var(--paper); }
 
+  /* ── 统一列表行按钮（历史/自选等面板共用）──────────────── */
+  .list-btn {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: all 0.18s;
+    background: transparent;
+    border: 1px solid var(--ink-soft);
+    color: var(--ink-soft);
+  }
+  .list-btn:hover { background: var(--ink-soft); color: var(--paper); }
+  .list-btn--primary {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+  }
+  .list-btn--primary:hover { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+  .list-btn--danger {
+    border-color: var(--accent);
+    color: var(--accent);
+    letter-spacing: 0.14em;
+  }
+  .list-btn--danger:hover { background: var(--accent); color: var(--paper); }
+  .list-btn--quiet {
+    border-color: var(--ink-faded);
+    color: var(--ink-faded);
+    padding: 5px 10px;
+    letter-spacing: 0.08em;
+  }
+  .list-btn--quiet:hover { background: var(--ink-faded); color: var(--paper); }
+
+  /* ── 统一重试/换模型按钮（替代 JS hover）─────────────────── */
+  .retry-btn {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 4px 14px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+  .retry-btn:hover { background: var(--accent); color: var(--paper); }
+  .retry-btn--ink:hover { background: var(--ink); color: var(--paper); }
+  .retry-btn--inverse {
+    border-color: var(--paper-dark);
+    color: var(--paper-dark);
+    padding: 5px 16px;
+    font-size: 0.74rem;
+    letter-spacing: 0.16em;
+  }
+  .retry-btn--inverse:hover { background: var(--paper); color: var(--ink); }
+
+  /* ── 统一模态标题块 ─────────────────────────────────────── */
+  .modal-title {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+  .modal-subtitle {
+    font-family: var(--font-mono);
+    font-variant: small-caps;
+    letter-spacing: 0.18em;
+    font-size: 0.66rem;
+    color: var(--ink-faded);
+    margin-top: 4px;
+  }
+
+  /* ── 统一设置面板小节标题 ───────────────────────────────── */
+  .settings-section-head {
+    font-family: var(--font-mono);
+    font-variant: small-caps;
+    letter-spacing: 0.18em;
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--ink-faded);
+  }
+
+  /* ── 统一空状态 ─────────────────────────────────────────── */
+  .empty-state {
+    text-align: center;
+    padding: 40px 0;
+    color: var(--ink-faded);
+    font-family: var(--font-body);
+  }
+  .empty-state-ornament {
+    color: var(--rule);
+    letter-spacing: 0.45em;
+    margin-bottom: 16px;
+    font-size: 1.5rem;
+  }
+  .empty-state-title {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--ink-soft);
+  }
+  .empty-state-hint { font-size: 0.85rem; }
+
+  /* ── 本期焦点下方动作按钮（收藏 / 导出）────────────────── */
+  .subject-action-btn {
+    background: transparent;
+    color: var(--ink-soft);
+    border: 1px solid var(--ink-soft);
+    padding: 5px 14px;
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+  .subject-action-btn:hover { background: var(--ink-soft); color: var(--paper); }
+  .subject-action-btn--accent {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .subject-action-btn--accent:hover { background: var(--accent); color: var(--paper); }
+  .subject-action-btn--active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--paper);
+  }
+  .subject-action-btn--active:hover { background: var(--accent-soft); border-color: var(--accent-soft); }
+
+  /* ── 面板内联搜索（历史档案筛选）─────────────────────────── */
+  .panel-filter {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--ink-faded);
+    font-family: var(--font-mono);
+    font-size: 0.84rem;
+    color: var(--ink);
+    outline: none;
+    padding: 6px 2px;
+    letter-spacing: 0.04em;
+    transition: border-color 0.2s;
+  }
+  .panel-filter:focus { border-bottom-color: var(--accent); }
+  .panel-filter::placeholder { color: var(--ink-faded); }
+
+  /* ── 全局打磨：选区 / 键盘焦点 / 滚动条 ─────────────────── */
+  ::selection {
+    background: var(--accent);
+    color: var(--paper);
+  }
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  * { scrollbar-width: thin; scrollbar-color: var(--rule) transparent; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--rule);
+    border: 3px solid var(--paper);
+    border-radius: 6px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--ink-soft); }
+
+  /* ── 动效偏好：尊重 prefers-reduced-motion ──────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    .ticker-track { animation: none; flex-wrap: wrap; }
+  }
+
+  /* ── 移动端：输入控件 ≥16px，避免 iOS 聚焦自动放大 ──────── */
+  @media (max-width: 640px) {
+    .key-input, .model-select, .fa-textarea, .panel-filter { font-size: 16px; }
+  }
+
   /* ── Settings panel (modal) ──────────────────────────────────── */
 
   .key-input {
@@ -153,7 +352,7 @@ body {
     border-bottom: 2px solid var(--ink-soft);
     border-radius: 0;
     padding: 0.45rem 0.65rem;
-    font-family: 'Courier Prime', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', monospace;
+    font-family: var(--font-mono);
     font-size: 0.82rem;
     color: var(--ink);
     outline: none;
@@ -165,13 +364,13 @@ body {
     display: inline-block;
     padding: 2px 10px;
     border: 1px solid currentColor;
-    font-family: 'Courier Prime', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', monospace;
+    font-family: var(--font-mono);
     font-size: 0.7rem;
     letter-spacing: 0.14em;
     text-transform: uppercase;
   }
   .model-select {
-    font-family: 'Courier Prime', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', monospace;
+    font-family: var(--font-mono);
     background: var(--paper-soft);
     border: 1px solid var(--ink-faded);
     color: var(--ink);
@@ -204,7 +403,7 @@ body {
   }
   .ticker-item {
     padding: 0 28px;
-    font-family: 'Courier Prime', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', monospace;
+    font-family: var(--font-mono);
     font-size: 0.86rem;
     letter-spacing: 0.1em;
     display: inline-flex;
@@ -226,13 +425,13 @@ body {
     margin: 0;
     background: var(--paper-dark);
     border-bottom: 1px solid var(--ink-faded);
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.78rem;
   }
   .events-badge--hint {
     color: var(--ink-faded);
     font-style: italic;
-    font-family: 'EB Garamond', 'Noto Serif SC', serif;
+    font-family: var(--font-body);
     font-size: 0.82rem;
   }
   .ev-item {
@@ -306,7 +505,7 @@ body {
     width: 56px; height: 56px;
     background: var(--ink);
     color: var(--paper);
-    font-family: 'Fraunces', 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
+    font-family: var(--font-display);
     font-size: 1.95rem; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
@@ -327,7 +526,7 @@ body {
   .dropcap::first-letter,
   .dropcap > p:first-child::first-letter {
     float: left;
-    font-family: 'Fraunces', 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
+    font-family: var(--font-display);
     font-size: 4.4em;
     line-height: 0.84;
     margin-right: 0.08em;
@@ -341,7 +540,7 @@ body {
     border: 2.5px solid currentColor;
     padding: 0.72rem 0.5rem;
     text-align: center;
-    font-family: 'Fraunces', 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
+    font-family: var(--font-display);
     font-weight: 700;
     letter-spacing: 0.22em;
     font-size: 1.08rem;
@@ -363,7 +562,7 @@ body {
 
   /* ── Section labels ──────────────────────────────────────────── */
   .section-label {
-    font-family: 'Courier Prime', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', monospace;
+    font-family: var(--font-mono);
     font-size: 0.7rem;
     letter-spacing: 0.22em;
     color: var(--ink-soft);
@@ -379,11 +578,11 @@ body {
 
   /* ── Loading wire feed ───────────────────────────────────────── */
   .wire-feed {
-    background: rgba(26, 20, 14, 0.04);
+    background: var(--wash);
     border-left: 3px solid var(--accent);
     padding: 14px 16px;
     margin: 18px 0;
-    font-family: 'Courier Prime', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', monospace;
+    font-family: var(--font-mono);
     font-size: 0.84rem;
     line-height: 1.65;
     min-height: 180px;
@@ -431,7 +630,7 @@ body {
   .progress-bar {
     width: 100%;
     height: 4px;
-    background: rgba(26, 20, 14, 0.1);
+    background: var(--wash-strong);
     overflow: hidden;
     margin: 14px 0 4px;
   }
@@ -439,6 +638,15 @@ body {
     height: 100%;
     background: linear-gradient(90deg, var(--accent), var(--accent-soft));
     transition: width 0.6s ease-out;
+  }
+  /* 不确定态：撰稿中无法精确量化进度，用稳定的呼吸代替随机跳变 */
+  .progress-fill--indeterminate {
+    width: 55%;
+    animation: progressBreathe 2.5s ease-in-out infinite;
+  }
+  @keyframes progressBreathe {
+    0%, 100% { width: 35%; opacity: 0.75; }
+    50%      { width: 72%; opacity: 1; }
   }
 
   /* ── Animations ──────────────────────────────────────────────── */
@@ -459,7 +667,6 @@ body {
     60%  { opacity: 0.8; filter: blur(1px); transform: translateY(2px); }
     100% { opacity: 1; filter: blur(0); transform: translateY(0); }
   }
-  .ink-develop { animation: inkDevelop 0.85s cubic-bezier(0.2, 0.65, 0.3, 1); }
 
   /* When pending → done in a "race" context, slightly accent the freshly-arrived column */
   @keyframes columnSettleHighlight {
@@ -482,7 +689,7 @@ body {
   .key-point .marker {
     color: var(--accent);
     margin-right: 0.55rem;
-    font-family: 'Fraunces', 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
+    font-family: var(--font-display);
     font-weight: 700;
   }
   .risk-pull {
@@ -494,7 +701,7 @@ body {
 
   .data-card {
     border: 1px solid var(--ink-faded);
-    background: rgba(255, 255, 255, 0.25);
+    background: var(--card-bg-strong);
     padding: 12px 14px;
   }
 
@@ -509,7 +716,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
-    font-family: 'Courier Prime', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', monospace;
+    font-family: var(--font-mono);
     font-size: 0.62rem;
     letter-spacing: 0.14em;
     color: var(--ink-soft);
@@ -521,7 +728,7 @@ body {
   .kline-legend {
     display: flex;
     gap: 12px;
-    font-family: 'Courier Prime', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', monospace;
+    font-family: var(--font-mono);
     font-size: 0.6rem;
     letter-spacing: 0.08em;
     color: var(--ink-faded);
@@ -546,7 +753,7 @@ body {
     align-items: center;
     justify-content: center;
     color: var(--ink-faded);
-    font-family: 'Courier Prime', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', monospace;
+    font-family: var(--font-mono);
     font-size: 0.78rem;
     letter-spacing: 0.12em;
   }
@@ -555,7 +762,7 @@ body {
     border: 1px solid var(--ink-faded);
     color: var(--ink-faded);
     padding: 2px 9px;
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.66rem;
     letter-spacing: 0.08em;
     cursor: pointer;
@@ -597,7 +804,7 @@ body {
     text-align: right;
   }
   .editor-stat-label {
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.6rem;
     letter-spacing: 0.18em;
     text-transform: uppercase;
@@ -605,14 +812,14 @@ body {
     margin-bottom: 4px;
   }
   .editor-stat-value {
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-size: 1.15rem;
     font-weight: 700;
     line-height: 1;
     color: var(--paper);
   }
   .editor-stat-sub {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.55rem;
     letter-spacing: 0.14em;
     color: var(--paper-dark);
@@ -624,7 +831,7 @@ body {
   .editor-dropcap::first-letter,
   .editor-dropcap > p:first-child::first-letter {
     float: left;
-    font-family: 'Fraunces', 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
+    font-family: var(--font-display);
     font-size: 4.6em;
     line-height: 0.86;
     margin-right: 0.1em;
@@ -650,7 +857,7 @@ body {
     border-radius: 1px;
   }
   .editor-keysent-text {
-    font-family: 'Fraunces', 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
+    font-family: var(--font-display);
     font-weight: 600;
     font-size: 1.18rem;
     line-height: 1.55;
@@ -713,7 +920,7 @@ body {
     align-items: center;
     flex-wrap: wrap;
     gap: 10px;
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.74rem;
     color: var(--paper-dark);
     letter-spacing: 0.06em;
@@ -778,17 +985,17 @@ body {
     padding: 8px 12px;
     text-align: right;
     color: var(--hold);
-    background: rgba(255,255,255,0.18);
+    background: var(--card-bg);
   }
   .qvmr-action span {
     display: block;
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.72rem;
     letter-spacing: 0.14em;
   }
   .qvmr-action strong {
     display: block;
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-size: 2rem;
     line-height: 1;
   }
@@ -815,7 +1022,7 @@ body {
   }
   .qvmr-verdict-row span {
     display: block;
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.64rem;
     letter-spacing: 0.14em;
     color: var(--ink-faded);
@@ -823,7 +1030,7 @@ body {
   .qvmr-verdict-row strong {
     display: block;
     margin-top: 4px;
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-size: 1.1rem;
     color: var(--ink);
   }
@@ -833,7 +1040,7 @@ body {
     color: var(--accent);
     background: rgba(139, 45, 31, 0.08);
     padding: 10px 12px;
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.78rem;
     letter-spacing: 0.06em;
   }
@@ -845,13 +1052,13 @@ body {
   }
   .qvmr-score-card {
     border: 1px solid var(--ink-faded);
-    background: rgba(255,255,255,0.16);
+    background: var(--card-bg);
     padding: 10px 12px;
   }
   .qvmr-score-card span,
   .qvmr-score-card small {
     display: block;
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.62rem;
     letter-spacing: 0.08em;
     color: var(--ink-faded);
@@ -859,7 +1066,7 @@ body {
   .qvmr-score-card strong {
     display: block;
     margin-top: 6px;
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-size: 1.5rem;
     line-height: 1;
   }
@@ -872,12 +1079,12 @@ body {
   .qvmr-explain-grid > div {
     border: 1px solid var(--ink-faded);
     padding: 12px 14px;
-    background: rgba(255,255,255,0.12);
+    background: var(--card-bg);
   }
   .qvmr-explain-grid h4,
   .qvmr-manual-group h4 {
     margin: 0 0 8px;
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.72rem;
     letter-spacing: 0.14em;
     color: var(--ink-soft);
@@ -900,7 +1107,7 @@ body {
     display: flex;
     justify-content: space-between;
     gap: 12px;
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.76rem;
     letter-spacing: 0.08em;
     color: var(--ink-soft);
@@ -998,13 +1205,13 @@ body {
     border-right: 0;
   }
   .memo-quality-label {
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.62rem;
     letter-spacing: 0.16em;
     color: var(--ink-faded);
   }
   .memo-quality-strip strong {
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-size: 1rem;
     line-height: 1.15;
     color: var(--ink);
@@ -1013,7 +1220,7 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.68rem;
     letter-spacing: 0.08em;
     color: var(--ink-soft);
@@ -1049,7 +1256,7 @@ body {
     grid-column: 1 / -1;
   }
   .memo-field span {
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.68rem;
     letter-spacing: 0.16em;
     color: var(--ink-soft);
@@ -1058,10 +1265,10 @@ body {
     width: 100%;
     resize: vertical;
     border: 1px solid var(--ink-faded);
-    background: rgba(255,255,255,0.16);
+    background: var(--card-bg);
     color: var(--ink);
     padding: 10px 12px;
-    font-family: 'EB Garamond', 'Noto Serif SC', serif;
+    font-family: var(--font-body);
     font-size: 1rem;
     line-height: 1.55;
     outline: none;
@@ -1109,7 +1316,7 @@ body {
   }
   .cd-chip {
     display: inline-block;
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.66rem;
     letter-spacing: 0.08em;
     padding: 2px 8px;
@@ -1143,14 +1350,14 @@ body {
     border: 1px solid var(--ink-faded);
   }
   .cd-chip-count {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.66rem;
     color: var(--paper-dark);
     letter-spacing: 0.08em;
     margin-left: 4px;
   }
   .cd-root-cause {
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.66rem;
     letter-spacing: 0.12em;
     color: var(--sell-light);
@@ -1201,7 +1408,7 @@ body {
   }
   .data-gap-source-card {
     border: 1px solid var(--ink-faded);
-    background: rgba(255,255,255,0.26);
+    background: var(--card-bg-strong);
     padding: 10px 12px;
     min-height: 74px;
   }
@@ -1216,7 +1423,7 @@ body {
     flex-shrink: 0;
     border: 1px solid currentColor;
     padding: 2px 7px;
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.62rem;
     letter-spacing: 0.08em;
   }
@@ -1254,7 +1461,7 @@ body {
     list-style: none;
     padding: 0;
     margin: 0;
-    font-family: 'EB Garamond', 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
+    font-family: var(--font-body);
   }
   .data-gap-list li {
     font-size: 0.96rem;
@@ -1265,7 +1472,7 @@ body {
   }
   .data-gap-attribution {
     display: block;
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.7rem;
     color: var(--ink-soft);
     margin-top: 2px;
@@ -1290,6 +1497,25 @@ body {
     gap: 10px;
     flex-wrap: wrap;
   }
+  .settings-toggle-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--ink-faded);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .settings-toggle-card:hover { background: var(--card-bg-strong); }
+  .settings-toggle-card input[type="checkbox"] {
+    margin-top: 3px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--accent);
+    flex-shrink: 0;
+  }
   .btn-ghost:disabled {
     opacity: 0.55;
     cursor: wait;
@@ -1302,7 +1528,7 @@ body {
   }
   .model-health-card {
     border: 1px solid var(--ink-faded);
-    background: rgba(255,255,255,0.22);
+    background: var(--card-bg-strong);
     padding: 10px 12px;
   }
   .model-health-card--ok { border-color: var(--buy); }
@@ -1318,7 +1544,7 @@ body {
   .model-health-pill {
     border: 1px solid currentColor;
     padding: 2px 7px;
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.62rem;
     letter-spacing: 0.08em;
     white-space: nowrap;
@@ -1338,7 +1564,7 @@ body {
   .task-console {
     margin: 14px 0 18px;
     border: 1.5px solid var(--ink);
-    background: rgba(255,255,255,0.18);
+    background: var(--card-bg);
     box-shadow: 4px 4px 0 var(--ink-faded);
   }
   .task-console-head {
@@ -1410,7 +1636,7 @@ body {
   .task-card-pill {
     border: 1px solid currentColor;
     padding: 2px 7px;
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.6rem;
     letter-spacing: 0.08em;
     color: var(--ink-faded);
@@ -1446,7 +1672,7 @@ body {
     margin-bottom: 14px;
     padding: 10px 12px;
     border: 1px dashed var(--ink-faded);
-    background: rgba(255,255,255,0.18);
+    background: var(--card-bg);
   }
   .watchlist-scan-meta {
     color: var(--ink-soft);
@@ -1462,7 +1688,7 @@ body {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.7rem;
     letter-spacing: 0.04em;
     color: var(--ink-soft);
@@ -1515,14 +1741,14 @@ body {
     padding: 9px 14px;
     text-align: left;
     cursor: pointer;
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.72rem;
   }
   .watchlist-brief-row:last-child {
     border-bottom: 0;
   }
   .watchlist-brief-row:hover {
-    background: rgba(255,255,255,0.18);
+    background: var(--card-bg);
   }
   .watchlist-brief-row--warning span:nth-child(2) {
     color: var(--hold);
@@ -1570,7 +1796,7 @@ body {
     color: var(--accent);
     border: 1.5px solid var(--accent);
     padding: 8px 18px;
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-size: 0.86rem;
     font-weight: 600;
     cursor: pointer;
@@ -1615,14 +1841,14 @@ body {
     margin-bottom: 6px;
   }
   .cred-role-name {
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-size: 1rem;
     font-weight: 700;
     color: var(--ink);
     letter-spacing: 0.02em;
   }
   .cred-role-badge {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.62rem;
     letter-spacing: 0.12em;
     color: var(--accent);
@@ -1636,7 +1862,7 @@ body {
     margin: 6px 0 10px;
   }
   .cred-pct {
-    font-family: 'Fraunces', serif;
+    font-family: var(--font-display);
     font-size: 2.1rem;
     font-weight: 800;
     line-height: 1;
@@ -1646,13 +1872,13 @@ body {
   .cred-pct--mid  { color: var(--hold-light); }
   .cred-pct--bad  { color: var(--sell-light); }
   .cred-n {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.78rem;
     color: var(--ink-faded);
     letter-spacing: 0.06em;
   }
   .cred-empty {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.96rem;
     color: var(--ink-faded);
     font-style: italic;
@@ -1668,7 +1894,7 @@ body {
     justify-content: center;
     width: 18px;
     height: 18px;
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.72rem;
     font-weight: 700;
     border: 1px solid;
@@ -1700,7 +1926,7 @@ body {
   .cred-bymarket-row {
     display: flex;
     justify-content: space-between;
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.74rem;
     color: var(--ink-soft);
     line-height: 1.6;
@@ -1713,7 +1939,7 @@ body {
     font-weight: 600;
   }
   .cred-distribution {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.74rem;
     color: var(--ink-soft);
     text-align: center;
@@ -1735,7 +1961,7 @@ body {
     margin-bottom: 8px;
   }
   .cred-queue-count {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.72rem;
     color: var(--ink-faded);
     letter-spacing: 0.06em;
@@ -1748,7 +1974,7 @@ body {
   .cred-queue-list li {
     padding: 6px 0;
     border-bottom: 1px dashed var(--ink-faded);
-    font-family: 'EB Garamond', 'Noto Serif SC', serif;
+    font-family: var(--font-body);
     font-size: 0.86rem;
     line-height: 1.5;
     display: flex;
@@ -1764,13 +1990,13 @@ body {
   .cred-queue-meta {
     color: var(--ink-soft);
     font-size: 0.78rem;
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     letter-spacing: 0.04em;
   }
   .cred-queue-err {
     color: var(--sell-light);
     font-size: 0.72rem;
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     width: 100%;
   }
   .cred-empty-state {
@@ -1796,14 +2022,14 @@ body {
     background: rgba(168, 70, 56, 0.05);
   }
   .cred-banner-title {
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-size: 1.02rem;
     font-weight: 700;
     color: var(--ink);
     margin-bottom: 6px;
   }
   .cred-banner-body {
-    font-family: 'EB Garamond', 'Noto Serif SC', serif;
+    font-family: var(--font-body);
     font-size: 0.9rem;
     line-height: 1.6;
     color: var(--ink-soft);
@@ -1848,7 +2074,7 @@ body {
     border: 1px solid var(--ink-faded);
     color: var(--ink-soft);
     padding: 4px 12px;
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.72rem;
     letter-spacing: 0.08em;
     cursor: pointer;
@@ -1880,7 +2106,7 @@ body {
     border-bottom: 1px solid var(--ink-faded);
   }
   .sr-topic-title {
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-size: 1.02rem;
     font-weight: 600;
     color: var(--ink);
@@ -1920,19 +2146,19 @@ body {
     border-bottom: 1px dashed var(--ink-faded);
   }
   .sr-rebut-name {
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-size: 0.92rem;
     font-weight: 700;
     color: var(--ink);
   }
   .sr-rebut-loading {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.72rem;
     color: var(--ink-faded);
     font-style: italic;
   }
   .sr-rebut-err {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.7rem;
     color: var(--sell);
   }
@@ -1959,7 +2185,7 @@ body {
     text-align: center;
     color: var(--ink-faded);
     font-style: italic;
-    font-family: 'EB Garamond', 'Noto Serif SC', serif;
+    font-family: var(--font-body);
   }
   .sr-editor-head {
     display: flex;
@@ -1977,7 +2203,7 @@ body {
     align-items: center;
   }
   .sr-shifted-badge {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.7rem;
     color: var(--accent);
     border: 1px solid var(--accent);
@@ -2012,7 +2238,7 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 3px;
-    font-family: 'Fraunces', serif;
+    font-family: var(--font-display);
     font-weight: 700;
     border: 1px solid currentColor;
     padding: 2px 8px;
@@ -2024,7 +2250,7 @@ body {
   .sr-pill--sell { color: var(--sell); background: rgba(215,123,106,0.1); }
   .sr-pill--hold { color: var(--hold); background: rgba(212,178,106,0.1); }
   .sr-pill-conv {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.7em;
     opacity: 0.85;
     font-weight: 400;
@@ -2038,7 +2264,7 @@ body {
     border: 1.5px solid var(--accent);
     color: var(--accent);
     padding: 8px 22px;
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-size: 0.92rem;
     font-weight: 600;
     cursor: pointer;
@@ -2057,7 +2283,7 @@ body {
   .second-round-trigger-note {
     text-align: center;
     margin-top: 6px;
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.68rem;
     color: var(--ink-faded);
     letter-spacing: 0.04em;
@@ -2083,7 +2309,7 @@ body {
     border: none;
     text-align: left;
     padding: 8px 14px;
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-size: 0.86rem;
     color: var(--ink);
     cursor: pointer;
@@ -2130,21 +2356,21 @@ body {
   .fa-q-marker {
     background: var(--ink);
     color: var(--paper);
-    font-family: 'Fraunces', serif;
+    font-family: var(--font-display);
     font-weight: 700;
     font-size: 0.82rem;
     padding: 2px 9px;
     flex: 0 0 auto;
   }
   .fa-q-text {
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-size: 1rem;
     font-weight: 600;
     color: var(--ink);
     line-height: 1.4;
   }
   .fa-q-picks {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.72rem;
     color: var(--ink-faded);
     letter-spacing: 0.04em;
@@ -2177,7 +2403,7 @@ body {
     flex-wrap: wrap;
   }
   .fa-answer-name {
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-size: 0.9rem;
     font-weight: 700;
     color: var(--ink);
@@ -2189,13 +2415,13 @@ body {
     flex-wrap: wrap;
   }
   .fa-confidence {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.7rem;
     color: var(--ink-soft);
     letter-spacing: 0.06em;
   }
   .fa-shift-badge {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.68rem;
     color: var(--accent);
     border: 1px solid var(--accent);
@@ -2205,7 +2431,7 @@ body {
   }
   .fa-answer-loading,
   .fa-answer-err {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.7rem;
     color: var(--ink-faded);
     font-style: italic;
@@ -2233,7 +2459,7 @@ body {
     flex-wrap: wrap;
   }
   .fa-editor-consensus {
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-size: 0.82rem;
     font-style: italic;
     color: var(--ink-soft);
@@ -2245,7 +2471,7 @@ body {
   }
   .fa-editor-loading,
   .fa-editor-err {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.74rem;
     color: var(--ink-faded);
     font-style: italic;
@@ -2262,7 +2488,7 @@ body {
     padding: 10px 12px;
     border: 1px solid var(--ink-faded);
     background: var(--paper-dark);
-    font-family: 'EB Garamond', 'Noto Serif SC', serif;
+    font-family: var(--font-body);
     font-size: 0.95rem;
     color: var(--ink);
     line-height: 1.5;
@@ -2289,7 +2515,7 @@ body {
     min-width: 0;
   }
   .fa-picks-label {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.72rem;
     color: var(--ink-soft);
     letter-spacing: 0.08em;
@@ -2304,7 +2530,7 @@ body {
     border: 1px solid var(--ink-faded);
     color: var(--ink-soft);
     padding: 3px 10px;
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-size: 0.82rem;
     cursor: pointer;
     transition: all 0.12s;
@@ -2320,7 +2546,7 @@ body {
   }
   .fa-pick-chip:disabled { opacity: 0.5; cursor: not-allowed; }
   .fa-picks-hint {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.66rem;
     color: var(--ink-faded);
     letter-spacing: 0.04em;
@@ -2330,7 +2556,7 @@ body {
     color: var(--paper);
     border: none;
     padding: 7px 18px;
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-size: 0.92rem;
     font-weight: 600;
     cursor: pointer;
@@ -2343,7 +2569,7 @@ body {
     cursor: not-allowed;
   }
   .fa-cost-note {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.68rem;
     color: var(--ink-faded);
     letter-spacing: 0.04em;
@@ -2397,13 +2623,13 @@ body {
     gap: 6px;
   }
   .fin-mini-label {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.7rem;
     color: var(--ink-soft);
     letter-spacing: 0.06em;
   }
   .fin-mini-last {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.78rem;
     color: var(--ink);
     font-weight: 600;
@@ -2412,13 +2638,13 @@ body {
     vertical-align: middle;
   }
   .fin-spark-empty {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.7rem;
     color: var(--ink-faded);
   }
   .fin-badge-toggle {
     flex: 0 0 auto;
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.7rem;
     color: var(--ink-soft);
     letter-spacing: 0.06em;
@@ -2432,7 +2658,7 @@ body {
   .fin-table {
     width: 100%;
     border-collapse: collapse;
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.78rem;
   }
   .fin-table th {
@@ -2508,7 +2734,7 @@ body {
     gap: 8px;
     align-items: center;
     flex-wrap: wrap;
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.74rem;
     color: var(--ink-soft);
     letter-spacing: 0.02em;
@@ -2529,7 +2755,7 @@ body {
   }
   .news-badge-toggle {
     flex: 0 0 auto;
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.7rem;
     color: var(--ink-soft);
     letter-spacing: 0.06em;
@@ -2547,7 +2773,7 @@ body {
     border-bottom: none;
   }
   .news-item-head {
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.7rem;
     color: var(--ink-faded);
     letter-spacing: 0.04em;
@@ -2558,7 +2784,7 @@ body {
     margin-left: 4px;
   }
   .news-item-headline {
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-size: 0.95rem;
     font-weight: 600;
     color: var(--ink);
@@ -2583,7 +2809,7 @@ body {
     margin-top: 8px;
     padding-top: 6px;
     border-top: 1px solid var(--ink-faded);
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.66rem;
     color: var(--ink-faded);
     text-align: right;
@@ -2629,7 +2855,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-style: normal;
     white-space: normal;
     animation: chipPopIn 0.16s ease-out;
@@ -2646,13 +2872,13 @@ body {
     color: var(--ink);
   }
   .stock-mention-popover-code {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.74rem;
     color: var(--ink-faded);
     letter-spacing: 0.08em;
   }
   .stock-mention-popover-meta {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.7rem;
     color: var(--ink-soft);
     letter-spacing: 0.1em;
@@ -2664,7 +2890,7 @@ body {
     color: var(--paper);
     border: none;
     padding: 6px 10px;
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-size: 0.84rem;
     font-weight: 600;
     cursor: pointer;
@@ -2753,14 +2979,14 @@ body {
     transform: scale(1.08);
   }
   .evo-node-marker-label {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-weight: 700;
     font-size: 0.74rem;
     color: var(--paper);
     line-height: 1;
   }
   .evo-node-meta {
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.7rem;
     letter-spacing: 0.06em;
     color: var(--ink-soft);
@@ -2787,7 +3013,7 @@ body {
     margin-bottom: 5px;
   }
   .evo-pill {
-    font-family: 'Fraunces', serif;
+    font-family: var(--font-display);
     font-weight: 700;
     font-size: 0.78rem;
     border: 1px solid currentColor;
@@ -2795,12 +3021,12 @@ body {
     letter-spacing: 0.04em;
   }
   .evo-price {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.78rem;
     color: var(--ink-soft);
   }
   .evo-outcome {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.7rem;
     padding: 1px 6px;
     border: 1px solid currentColor;
@@ -2810,7 +3036,7 @@ body {
   .evo-outcome--down { color: var(--sell); }
   .evo-outcome--tie { color: var(--ink-faded); }
   .evo-node-headline {
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-size: 0.94rem;
     font-weight: 600;
     color: var(--ink);
@@ -2833,14 +3059,14 @@ body {
     flex: 0 0 auto;
   }
   .evo-node-keysent > span:last-child {
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-size: 0.9rem;
     line-height: 1.5;
     color: var(--ink);
     font-weight: 500;
   }
   .evo-node-watchpoint {
-    font-family: 'EB Garamond', 'Noto Serif SC', serif;
+    font-family: var(--font-body);
     font-size: 0.86rem;
     color: var(--ink-soft);
     line-height: 1.5;
@@ -2854,7 +3080,7 @@ body {
     border-top: 1px dashed var(--ink-faded);
   }
   .evo-detail-cell {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
   }
   .evo-detail-label {
     font-size: 0.62rem;
@@ -2888,7 +3114,7 @@ body {
     border: 1px dashed var(--accent);
     color: var(--accent);
     padding: 5px 12px;
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-size: 0.82rem;
     font-weight: 500;
     cursor: pointer;
@@ -2927,7 +3153,7 @@ body {
     background: var(--paper);
     border: 1.5px solid var(--ink-faded);
     color: var(--ink);
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-size: 0.86rem;
     cursor: pointer;
     transition: all 0.18s;
@@ -2945,18 +3171,18 @@ body {
     font-weight: 600;
   }
   .cmp-candidate-code {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.74rem;
     opacity: 0.75;
   }
   .cmp-candidate-mkt {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.66rem;
     letter-spacing: 0.08em;
     opacity: 0.6;
   }
   .cmp-candidate-kind {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.6rem;
     letter-spacing: 0.08em;
     padding: 1px 5px;
@@ -2969,7 +3195,7 @@ body {
   }
   .cmp-empty {
     padding: 18px 0;
-    font-family: 'EB Garamond', 'Noto Serif SC', serif;
+    font-family: var(--font-body);
     font-size: 0.92rem;
     color: var(--ink-soft);
     font-style: italic;
@@ -2978,7 +3204,7 @@ body {
   .cmp-hint {
     padding: 32px 24px;
     text-align: center;
-    font-family: 'EB Garamond', 'Noto Serif SC', serif;
+    font-family: var(--font-body);
     font-size: 0.96rem;
     color: var(--ink-faded);
     font-style: italic;
@@ -2992,7 +3218,7 @@ body {
   .cmp-table {
     width: 100%;
     border-collapse: collapse;
-    font-family: 'EB Garamond', 'Noto Serif SC', serif;
+    font-family: var(--font-body);
   }
   .cmp-table thead {
     border-bottom: 2px solid var(--ink);
@@ -3008,7 +3234,7 @@ body {
     z-index: 2;
   }
   .cmp-th-label {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.7rem;
     color: var(--ink-faded);
     letter-spacing: 0.12em;
@@ -3034,7 +3260,7 @@ body {
     color: var(--accent);
   }
   .cmp-th-name {
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-size: 1.05rem;
     font-weight: 700;
     color: var(--ink);
@@ -3045,7 +3271,7 @@ body {
     display: flex;
     gap: 8px;
     margin-top: 2px;
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.7rem;
     color: var(--ink-faded);
     letter-spacing: 0.06em;
@@ -3067,7 +3293,7 @@ body {
   }
   .cmp-td-label {
     padding: 10px 12px;
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.74rem;
     color: var(--ink-soft);
     letter-spacing: 0.05em;
@@ -3108,14 +3334,14 @@ body {
     align-items: center;
     gap: 6px;
     padding: 4px 10px;
-    font-family: 'Fraunces', serif;
+    font-family: var(--font-display);
     font-weight: 700;
     font-size: 0.88rem;
     letter-spacing: 0.04em;
     border: 1px solid currentColor;
   }
   .cmp-vote-mini {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.66rem;
     opacity: 0.8;
     font-weight: 400;
@@ -3123,7 +3349,7 @@ body {
   }
   .cmp-dissent {
     display: inline-block;
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.72rem;
     letter-spacing: 0.08em;
     padding: 2px 8px;
@@ -3147,7 +3373,7 @@ body {
     flex-direction: column;
   }
   .cmp-keypoint-from {
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.66rem;
     color: var(--ink-faded);
     letter-spacing: 0.06em;
@@ -3163,7 +3389,7 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 4px 12px;
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.74rem;
   }
   .cmp-role-row {
@@ -3207,7 +3433,7 @@ body {
     box-shadow: 3px 3px 0 var(--ink-soft);
     color: var(--ink);
     cursor: pointer;
-    font-family: 'Fraunces', 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
+    font-family: var(--font-display);
     font-size: 1.6rem;
     font-weight: 700;
     line-height: 1;
@@ -3227,7 +3453,7 @@ body {
     position: absolute;
     top: 56px;
     right: 0;
-    font-family: 'Courier Prime', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', monospace;
+    font-family: var(--font-mono);
     font-size: 0.6rem;
     letter-spacing: 0.18em;
     color: var(--ink-soft);
@@ -3293,7 +3519,7 @@ body {
     width: 30px;
     height: 30px;
     cursor: pointer;
-    font-family: 'Fraunces', 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
+    font-family: var(--font-display);
     font-size: 1.2rem;
     line-height: 1;
     display: flex;
@@ -3313,7 +3539,7 @@ body {
     overflow-y: auto;
   }
   .data-label {
-    font-family: 'Courier Prime', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', monospace;
+    font-family: var(--font-mono);
     font-size: 0.66rem;
     letter-spacing: 0.18em;
     color: var(--ink-faded);
@@ -3321,7 +3547,7 @@ body {
     margin-bottom: 4px;
   }
   .data-value {
-    font-family: 'Fraunces', 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
+    font-family: var(--font-display);
     font-size: 1.3rem;
     font-weight: 700;
     line-height: 1;
@@ -3338,7 +3564,7 @@ body {
   }
   .symbol-tab {
     padding: 10px 18px;
-    font-family: 'Fraunces', 'Noto Serif SC', serif;
+    font-family: var(--font-display);
     font-size: 1.05rem;
     font-weight: 600;
     color: var(--ink-faded);
@@ -3397,7 +3623,7 @@ body {
     width: 26px;
     height: 26px;
     border: 1.5px solid currentColor;
-    font-family: 'Fraunces', serif;
+    font-family: var(--font-display);
     font-weight: 700;
     font-size: 0.95rem;
     margin-left: 8px;
@@ -3423,7 +3649,7 @@ body {
     display: flex;
     align-items: baseline;
     gap: 10px;
-    font-family: 'Courier Prime', 'Noto Sans SC', monospace;
+    font-family: var(--font-mono);
     font-size: 0.72rem;
     letter-spacing: 0.2em;
     text-transform: uppercase;
@@ -3445,7 +3671,7 @@ body {
     color: var(--ink-faded);
   }
   .edition-tagline {
-    font-family: 'EB Garamond', 'Noto Serif SC', 'Songti SC', serif;
+    font-family: var(--font-body);
     font-style: italic;
     font-size: 0.86rem;
     color: var(--ink-soft);
@@ -3502,7 +3728,7 @@ body {
     box-shadow: 2px 2px 0 var(--ink-faded);
     color: var(--ink);
     cursor: pointer;
-    font-family: 'Fraunces', serif;
+    font-family: var(--font-display);
     font-size: 0.95rem;
     font-weight: 600;
     line-height: 1;
@@ -3551,7 +3777,7 @@ body {
     border-radius: 8px;
     background: var(--ink);
     color: var(--paper);
-    font-family: 'Courier Prime', monospace;
+    font-family: var(--font-mono);
     font-size: 0.56rem;
     font-weight: 700;
     display: flex;
@@ -3701,7 +3927,10 @@ body {
     .modal-backdrop,
     .kline-range-btn,
     .progress-bar,
-    .ticker-strip {
+    .ticker-strip,
+    .fa-input-block,
+    .panel-filter,
+    textarea {
       display: none !important;
     }
     /* 强制亮色 */
@@ -3815,7 +4044,7 @@ body {
 }
 
 .qvmr-insufficient-title {
-  font-family: 'Fraunces', 'Noto Serif SC', serif;
+  font-family: var(--font-display);
   font-weight: 700;
   font-size: 1.05rem;
   color: var(--ink);
@@ -3823,7 +4052,7 @@ body {
 }
 
 .qvmr-insufficient-body {
-  font-family: 'Fraunces', 'Noto Serif SC', serif;
+  font-family: var(--font-display);
   font-size: 0.88rem;
   line-height: 1.65;
   color: var(--ink-soft);
@@ -3839,7 +4068,7 @@ body {
 
 .qvmr-insufficient-hint {
   margin-top: 10px;
-  font-family: 'Fraunces', 'Noto Serif SC', serif;
+  font-family: var(--font-display);
   font-size: 0.82rem;
   color: var(--ink-faded);
   font-style: italic;
@@ -3855,7 +4084,7 @@ body {
   margin-bottom: 14px;
   background: rgba(212, 160, 23, 0.08);
   border: 1px solid rgba(212, 160, 23, 0.35);
-  font-family: 'Fraunces', 'Noto Serif SC', serif;
+  font-family: var(--font-display);
   font-size: 0.85rem;
   line-height: 1.55;
   color: var(--ink);
@@ -3889,7 +4118,7 @@ body {
 .theme-rotation-panel {
   margin: 24px 0 30px;
   border: 1.5px solid var(--ink);
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--card-bg);
   box-shadow: 5px 5px 0 var(--ink-faded);
 }
 
@@ -3951,7 +4180,7 @@ body {
   display: block;
   margin: 3px 0;
   color: var(--accent);
-  font-family: 'Fraunces', 'Noto Serif SC', serif;
+  font-family: var(--font-display);
   font-size: 1.8rem;
   line-height: 1;
 }
@@ -3985,7 +4214,7 @@ body {
 
 .theme-rotation-score {
   color: var(--accent);
-  font-family: 'Fraunces', 'Noto Serif SC', serif;
+  font-family: var(--font-display);
   font-weight: 800;
 }
 

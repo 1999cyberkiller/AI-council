@@ -8,7 +8,7 @@
  * 运行：npx vitest run src/hooks/__tests__/useDispatchSession.reducer.test.js
  */
 
-import { describe, it, expect, beforeAll, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 // ── Mock 掉所有有副作用风险的 import ──────────────────────────────
 // reducer 本身不调用这些，但 useDispatchSession.jsx 顶部 import 了它们。

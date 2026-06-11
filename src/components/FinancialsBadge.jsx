@@ -62,11 +62,8 @@ const Sparkline = ({ values, w = 64, h = 18 }) => {
 export const FinancialsBadge = ({ financialsData }) => {
   const [expanded, setExpanded] = useState(false);
 
+  // 缺 key 的提示由 EventsBadge 统一承担，这里只要无数据就不渲染
   if (!financialsData || !Array.isArray(financialsData.quarters) || financialsData.quarters.length === 0) {
-    if (financialsData?.hasMissingKey) {
-      // 不重复 EventsBadge 已经的提示
-      return null;
-    }
     return null;
   }
   const quarters = financialsData.quarters;

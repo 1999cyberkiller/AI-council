@@ -2,19 +2,6 @@
    SHARED INLINE STYLE CONSTANTS · 高频复用，避免每次 render 重新构建
    ────────────────────────────────────────────────────────────────── */
 
-export const STY_RETRY_BTN_BASE = {
-  background: 'transparent',
-  border: '1px solid var(--accent)',
-  color: 'var(--accent)',
-  padding: '4px 14px',
-  fontFamily: "'Courier Prime', 'Noto Sans SC', monospace",
-  fontSize: '0.72rem',
-  letterSpacing: '0.14em',
-  textTransform: 'uppercase',
-  cursor: 'pointer',
-  transition: 'all 0.18s',
-};
-
 export const STY_ERR_LINE = {
   marginTop: 8,
   fontSize: '0.74rem',
@@ -24,9 +11,9 @@ export const STY_ERR_LINE = {
 export const STY_ERR_RAW = {
   marginTop: 6,
   padding: '8px 10px',
-  background: 'rgba(0,0,0,0.04)',
+  background: 'var(--wash)',
   border: '1px dashed var(--ink-faded)',
-  fontFamily: "'Courier Prime', monospace",
+  fontFamily: "var(--font-mono)",
   fontSize: '0.7rem',
   color: 'var(--ink-soft)',
   whiteSpace: 'pre-wrap',
@@ -40,7 +27,7 @@ export const STY_DISCLOSURE_BTN = {
   background: 'transparent',
   border: 'none',
   color: 'var(--ink-faded)',
-  fontFamily: "'Courier Prime', 'Noto Sans SC', monospace",
+  fontFamily: "var(--font-mono)",
   fontSize: '0.66rem',
   letterSpacing: '0.1em',
   cursor: 'pointer',
@@ -56,7 +43,7 @@ export const STY_TOAST = {
   background: 'var(--ink)',
   color: 'var(--paper)',
   padding: '10px 22px',
-  fontFamily: "'Fraunces', 'Noto Serif SC', serif",
+  fontFamily: "var(--font-display)",
   fontSize: '0.92rem',
   boxShadow: '4px 4px 0 var(--accent)',
   border: '1px solid var(--ink)',

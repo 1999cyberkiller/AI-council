@@ -38,7 +38,7 @@ function cacheSet(key, value) {
   try {
     if (typeof window === 'undefined') return;
     window.sessionStorage.setItem(CONS_CACHE_PREFIX + key, JSON.stringify({ t: Date.now(), v: value }));
-  } catch {}
+  } catch { /* 静默降级 */ }
 }
 
 /* ──────────────────────────────────────────────────────────────

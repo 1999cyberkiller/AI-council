@@ -60,7 +60,7 @@ function loadManualMap() {
 function saveManualMap(map) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
-  } catch {}
+  } catch { /* 静默降级 */ }
 }
 
 const actionCN = (action) => ({
