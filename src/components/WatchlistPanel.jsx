@@ -106,9 +106,12 @@ export const WatchlistPanel = ({
 
           {watchlist.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-state-ornament">★</div>
+              <div className="empty-state-kicker">WATCHLIST · 00</div>
               <div className="empty-state-title">自选名单为空</div>
               <div className="empty-state-hint">分析后点标题旁的 ★ 按钮即可加入此列表</div>
+              <button type="button" className="empty-state-action" onClick={onToggle}>
+                返回议事厅 →
+              </button>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

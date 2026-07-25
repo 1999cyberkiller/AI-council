@@ -579,7 +579,7 @@ export default function App() {
 
   const buildHistoryMarkdown = (entry) => {
     const stock = entry.stockData || {};
-    const lines = [`# ${stock.name || entry.ticker} AI 议会`, ''];
+    const lines = [`# ${stock.name || entry.ticker} AI议会`, ''];
     lines.push(`- 代码：${stock.code || entry.ticker || '—'}`);
     lines.push(`- 市场：${stock.market === 'A' ? 'A 股' : stock.market === 'US' ? '美股' : '—'}`);
     lines.push(`- 归档时间：${fmtMdDate(entry.timestamp)}`);
@@ -613,7 +613,7 @@ export default function App() {
       }
       if (d.risk) lines.push(`风险提示：${d.risk}`, '');
     });
-    lines.push('---', '由 The AI Council Gazette 导出。内容仅供研究，不构成投资建议。');
+    lines.push('---', '由 AI议会 导出。内容仅供研究，不构成投资建议。');
     return lines.join('\n');
   };
 
@@ -849,8 +849,11 @@ export default function App() {
 
   /* ── 同步 <meta name="theme-color">，让移动端状态栏跟随主题 ── */
   useEffect(() => {
+    const pageColor = theme === 'dark' ? '#1B1612' : '#F0E8D6';
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', theme === 'dark' ? '#1B1612' : '#F0E8D6');
+    if (meta) meta.setAttribute('content', pageColor);
+    document.documentElement.style.backgroundColor = pageColor;
+    document.body.style.backgroundColor = pageColor;
   }, [theme]);
 
   const running = session.phase === 'fetching' || session.phase === 'analysts' || session.phase === 'editor';
@@ -988,21 +991,21 @@ export default function App() {
             />
           </div>
 
-          <header className="text-center" style={{ paddingBottom: '8px', marginBottom: '32px' }}>
-            <div className="ornament" style={{ marginBottom: '4px' }}>❦ &nbsp; ✦ &nbsp; ❦ &nbsp; ✦ &nbsp; ❦</div>
-            <h1 className="display-serif" style={{ fontSize: 'clamp(2.6rem, 7vw, 5rem)', fontWeight: 900, lineHeight: 0.95, margin: '8px 0 10px', letterSpacing: '-0.015em' }}>
-              The AI Council Gazette
-            </h1>
-            <div className="display-serif" style={{ fontSize: 'clamp(1rem, 2.2vw, 1.4rem)', letterSpacing: '0.36em', color: 'var(--ink-soft)', fontWeight: 500 }}>
-              A I 议 会
+          <header className="gazette-masthead text-center">
+            <h1 className="masthead-title">AI议会</h1>
+            <div className="masthead-deck mono">
+              四种投资框架，一份可追溯的研究裁决
             </div>
           </header>
 
-          <section style={{ marginBottom: '32px', padding: '28px 32px', border: '1.5px solid var(--ink)', background: 'var(--card-bg)', boxShadow: '6px 6px 0 var(--ink-faded)' }}>
+          <section className="subject-panel">
+            <div className="subject-panel__index mono" aria-hidden="true">01</div>
             <div className="flex flex-col md:flex-row items-stretch md:items-end gap-5">
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="small-caps mono" style={{ fontSize: '0.74rem', letterSpacing: '0.22em', color: 'var(--ink-soft)', marginBottom: '8px' }}>
-                  ◆ TODAY'S SUBJECT OF INQUIRY · 本 期 问 询 主 题
+                <div className="subject-kicker small-caps mono">
+                  <span className="subject-kicker__en">TODAY'S SUBJECT OF INQUIRY</span>
+                  <span className="subject-kicker__sep" aria-hidden="true">·</span>
+                  <span className="subject-kicker__cn">本 期 问 询 主 题</span>
                 </div>
                 <input
                   ref={tickerInputRef}
@@ -1048,13 +1051,19 @@ export default function App() {
                 })() : '召集议会 →'}
               </button>
             </div>
-            <div className="body-serif" style={{ fontSize: '0.78rem', color: 'var(--ink-faded)', marginTop: '14px', lineHeight: 1.55 }}>
-              支持 A 股代码 (600519) / A 股名称 (贵州茅台) / 美股代码 (AAPL)。
-              系统将先抓取实时行情，再让四位作者分别撰稿。按 <span className="mono" style={{ border: '1px solid var(--ink-faded)', padding: '0 5px', fontSize: '0.72rem' }}>/</span> 可随时聚焦此输入框。
+            <div className="subject-panel__hint body-serif">
+              <span>支持 A 股代码 (600519) / A 股名称 (贵州茅台) / 美股代码 (AAPL)。</span>
+              <span className="subject-panel__flow"> 系统将先抓取实时行情，再让四位作者分别撰稿。</span>
+              <span>按 <span className="mono" style={{ border: '1px solid var(--ink-faded)', padding: '0 5px', fontSize: '0.72rem' }}>/</span> 可随时聚焦此输入框。</span>
             </div>
             {session.stockError && (
-              <div className="mono" style={{ fontSize: '0.85rem', color: 'var(--accent)', marginTop: 12, padding: '8px 12px', border: '1px solid var(--accent)', background: 'rgba(139, 45, 31, 0.06)' }}>
-                ✗ {session.stockError}
+              <div className="stock-error-banner" role="alert">
+                <span>{session.stockError}</span>
+                {session.stockError.includes('配置') && (
+                  <button type="button" onClick={() => setSettingsOpen(true)}>
+                    立即配置 <span aria-hidden="true">→</span>
+                  </button>
+                )}
               </div>
             )}
           </section>
@@ -1062,27 +1071,27 @@ export default function App() {
           {tabs.length > 0 && (
             <div className="symbol-tabs">
               {tabs.map((tab) => (
-                <button
+                <div
                   key={tab.id}
                   className={`symbol-tab ${activeTabId === tab.id ? 'active' : ''}`}
-                  onClick={() => switchTab(tab.id)}
                 >
-                  <span>{tab.stockData?.name || tab.ticker}</span>
-                  <span
+                  <button
+                    type="button"
+                    className="symbol-tab__select"
+                    aria-pressed={activeTabId === tab.id}
+                    onClick={() => switchTab(tab.id)}
+                  >
+                    {tab.stockData?.name || tab.ticker}
+                  </button>
+                  <button
+                    type="button"
                     className="symbol-tab-close"
-                    role="button"
-                    tabIndex={0}
                     aria-label={`关闭 ${tab.stockData?.name || tab.ticker}`}
-                    onClick={(e) => { e.stopPropagation(); closeTab(tab.id); }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault(); e.stopPropagation(); closeTab(tab.id);
-                      }
-                    }}
+                    onClick={() => closeTab(tab.id)}
                   >
                     ×
-                  </span>
-                </button>
+                  </button>
+                </div>
               ))}
             </div>
           )}
@@ -1108,7 +1117,6 @@ export default function App() {
 
           {submittedTicker && session.stockData && (
             <div className="text-center fade-up" style={{ margin: '32px 0' }}>
-              <div className="ornament" style={{ marginBottom: '8px' }}>━━━ ✦ ━━━</div>
               <div className="small-caps mono" style={{ fontSize: '0.78rem', color: 'var(--ink-soft)', marginBottom: '8px', letterSpacing: '0.25em' }}>
                 本 期 焦 点 · TODAY'S SUBJECT
               </div>
@@ -1127,7 +1135,7 @@ export default function App() {
                   className={`subject-action-btn ${isInWatchlist(session.stockData.code) ? 'subject-action-btn--active' : 'subject-action-btn--accent'}`}
                   title={isInWatchlist(session.stockData.code) ? '从自选股移除' : '加入自选股'}
                 >
-                  {isInWatchlist(session.stockData.code) ? '★ 已收藏' : '☆ 加入自选'}
+                  {isInWatchlist(session.stockData.code) ? '已收藏' : '加入自选'}
                 </button>
                 <button
                   onClick={handlePrint}
@@ -1275,25 +1283,41 @@ export default function App() {
           )}
 
           {!submittedTicker && (
-            <div className="text-center body-serif fade-up" style={{ padding: '32px 20px 32px', color: 'var(--ink-faded)' }}>
-              <div className="ornament" style={{ marginBottom: '24px' }}>❦ &nbsp; ❦ &nbsp; ❦</div>
-              <div className="display-serif" style={{ fontSize: '1.5rem', marginBottom: '14px', fontWeight: 600, color: 'var(--ink-soft)' }}>
-                议 会 尚 待 召 集
+            <div className="council-ready body-serif fade-up">
+              <div className="council-ready__intro">
+                <div className="council-ready__eyebrow mono">COUNCIL CHAMBER · 议事厅</div>
+                <div className="council-ready__title display-serif">
+                  {hasAnyConfig ? '议 会 已 就 席' : '议 会 尚 待 召 集'}
+                </div>
+                <div className="council-ready__copy">
+                  {hasAnyConfig
+                    ? '输入股票代码或名称。四位分析师将并行研究，主编随后给出综合裁决。'
+                    : '先完成模型配置，再输入股票代码或名称。整场研究会保留观点分歧与数据缺口。'}
+                </div>
+                {!hasAnyConfig && (
+                  <button className="council-ready__setup mono" onClick={() => setSettingsOpen(true)}>
+                    打开编辑部配置 <span aria-hidden="true">→</span>
+                  </button>
+                )}
               </div>
-              <div style={{ fontSize: '0.92rem', maxWidth: '500px', margin: '0 auto', lineHeight: 1.65 }}>
-                请先点击右上角 <span className="display-serif" style={{ fontWeight: 700 }}>⚙</span> 配置至少一个模型的 API Key，<br />
-                然后输入股票代码或名称（A 股、美股皆可）。
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4" style={{ maxWidth: '900px', margin: '40px auto 0' }}>
-                {ANALYSTS.map((a) => {
+              <div className="council-desks">
+                {ANALYSTS.map((a, index) => {
                   const model = models.find((m) => m.id === assignments[a.id]);
                   const hasKey = model && apiKeys[model.id];
                   return (
-                    <div key={a.id} style={{ padding: '14px 12px', border: '1px solid var(--ink-faded)', background: 'var(--card-bg)' }}>
-                      <div className="display-serif" style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--ink-soft)' }}>{a.monogram}</div>
-                      <div className="display-serif" style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--ink)', marginTop: '2px' }}>{a.cnName}</div>
-                      <div className="mono" style={{ fontSize: '0.7rem', color: hasKey ? 'var(--buy)' : 'var(--ink-faded)', marginTop: '6px', letterSpacing: '0.08em' }}>
-                        {model ? `▸ ${model.name}` : '— 未分配 —'} {hasKey ? '✓' : ''}
+                    <div
+                      key={a.id}
+                      className={`council-desk ${hasKey ? 'council-desk--ready' : ''}`}
+                      style={{ '--desk-delay': `${index * 80}ms` }}
+                    >
+                      <div className="council-desk__topline mono">
+                        <span>DESK 0{index + 1}</span>
+                        <span>{hasKey ? 'READY' : 'STANDBY'}</span>
+                      </div>
+                      <div className="council-desk__monogram display-serif">{a.monogram}</div>
+                      <div className="council-desk__name display-serif">{a.cnName}</div>
+                      <div className="council-desk__model mono">
+                        {model ? model.name : '未分配模型'}
                       </div>
                     </div>
                   );
@@ -1303,9 +1327,8 @@ export default function App() {
           )}
 
           <footer className="text-center" style={{ marginTop: '60px', paddingTop: '24px', borderTop: '4px double var(--ink)' }}>
-            <div className="ornament" style={{ marginBottom: '12px' }}>✦ &nbsp; ✦ &nbsp; ✦</div>
-            <div className="small-caps mono" style={{ fontSize: '0.72rem', letterSpacing: '0.22em', color: 'var(--ink-soft)', marginBottom: '10px' }}>
-              THE AI COUNCIL GAZETTE · DEMO EDITION v2
+            <div className="display-serif" style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--ink-soft)', marginBottom: '10px' }}>
+              AI议会
             </div>
             <div className="body-serif" style={{ fontSize: '0.76rem', color: 'var(--ink-faded)', maxWidth: '680px', margin: '0 auto', lineHeight: 1.6 }}>
               ※ 本刊所有专栏内容由 AI 模型生成，仅作研究演示与多视角思考练习之用，不构成任何投资建议或财务咨询。

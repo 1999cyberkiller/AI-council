@@ -118,7 +118,7 @@ export function buildSystemPrompt(analyst, personaSignal = null) {
     ? `\n\n【你的过往表现】\n${personaSignal}\n本次请基于以上历史记录，更审慎地下判断——但保持你流派的风格和独立判断。`
     : '';
 
-  return `你是《AI 议会》（The AI Council Gazette）的常驻专栏作者 · ${analyst.cnName}（${analyst.enName}）。
+  return `你是《AI议会》的常驻专栏作者 · ${analyst.cnName}（${analyst.enName}）。
 ${analyst.persona}
 分析视角：${analyst.focus}${signalBlock}
 
@@ -277,7 +277,7 @@ const EDITOR_OUTPUT_RULES = `
 - 所有引用分析师姓名仅限本期实际交稿的中文名，严禁编造`;
 
 export function buildEditorSystemPrompt() {
-  return `你是《AI 议会》（The AI Council Gazette）的主编（Editor-in-Chief），资深财经评论人。
+  return `你是《AI议会》的主编（Editor-in-Chief），资深财经评论人。
 
 风格：
 1. 不重复罗列各篇观点，从更高视角抽象共识与分歧
@@ -368,7 +368,7 @@ const REBUTTAL_OUTPUT_RULES = `
 refined_verdict 可以与初轮相同（坚持立场），也可以让步（被对方说服）；refined_conviction 反映你听完对方后的信心。`;
 
 export function buildRebuttalSystemPrompt(analyst) {
-  return `你是《AI 议会》（The AI Council Gazette）的 ${analyst.cnName}（${analyst.enName}）。
+  return `你是《AI议会》的 ${analyst.cnName}（${analyst.enName}）。
 ${analyst.persona}
 
 【议会进入二次审稿环节】
@@ -427,7 +427,7 @@ shifted=true 当你的 verdict 或 conviction 比初轮发生实质变化时。
 保持评论员风格：不和稀泥，敢表态。`;
 
 export function buildSecondRoundEditorSystemPrompt() {
-  return `你是《AI 议会》（The AI Council Gazette）的主编。议会进入二次审稿环节。
+  return `你是《AI议会》的主编。议会进入二次审稿环节。
 你已读完初轮所有专栏并写了第一份札记。现在两位分析师就一个具体分歧互相回应了对方。
 请基于这次"对话"，写一份精炼的二次审稿，并明确你的最终倾向是否因此发生改变。
 ${SECOND_ROUND_EDITOR_RULES}`;
@@ -471,7 +471,7 @@ stance_shift: 如果你的回答让你想修正初轮 verdict，写新的；否�
 confidence: 你对自己这个回答的把握程度。`;
 
 export function buildFreeAskSystemPrompt(analyst) {
-  return `你是《AI 议会》（The AI Council Gazette）的 ${analyst.cnName}（${analyst.enName}）。
+  return `你是《AI议会》的 ${analyst.cnName}（${analyst.enName}）。
 ${analyst.persona}
 
 【议会进入自由追问环节】
@@ -512,7 +512,7 @@ const FREE_ASK_EDITOR_RULES = `
 }`;
 
 export function buildFreeAskEditorSystemPrompt() {
-  return `你是《AI 议会》（The AI Council Gazette）的主编。读者提了一个问题，两位分析师给了答案。
+  return `你是《AI议会》的主编。读者提了一个问题，两位分析师给了答案。
 请简短地综合一下，告诉读者两人的共识和分歧，并给出你自己的简短判断。
 ${FREE_ASK_EDITOR_RULES}`;
 }

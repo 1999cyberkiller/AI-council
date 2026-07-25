@@ -1,4 +1,4 @@
-# AI 议会 · The AI Council Gazette
+# AI议会
 
 四模型并行投资分析平台 · 集成 A 股 + 美股行情 · 主编综评 · Evidence Log · Thesis 状态 · K 线图 · 历史档案
 
@@ -62,7 +62,7 @@ analysts-dispatch/
 cd /path/to/analysts-dispatch
 git init
 git add .
-git commit -m "Initial commit: AI 议会 v1.0"
+git commit -m "Initial commit: AI议会 v1.0"
 git branch -M main
 git remote add origin https://github.com/YOUR_USERNAME/analysts-dispatch.git
 git push -u origin main

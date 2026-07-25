@@ -552,7 +552,7 @@ export function useDispatchSession({
       return m && apiKeys[m.id] && apiKeys[m.id].trim();
     });
     if (ready.length === 0) {
-      dispatch({ type: 'quote_error', error: '请先点击右上角 ⚙ 按钮，至少配置一位分析师对应的模型 API Key' });
+      dispatch({ type: 'quote_error', error: '请先打开设置，至少配置一位分析师对应的模型 API Key' });
       return { needsConfig: true };
     }
 
