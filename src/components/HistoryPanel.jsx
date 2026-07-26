@@ -60,9 +60,12 @@ export const HistoryPanel = ({ expanded, onToggle, history, onLoad, onDelete, on
         <div className="modal-body">
           {history.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-state-ornament">❦</div>
+              <div className="empty-state-kicker">ARCHIVE · 00</div>
               <div className="empty-state-title">档案柜空空如也</div>
               <div className="empty-state-hint">完成首次分析后，会自动归档至此供日后查阅</div>
+              <button type="button" className="empty-state-action" onClick={onToggle}>
+                返回议事厅 →
+              </button>
             </div>
           ) : (
             <>

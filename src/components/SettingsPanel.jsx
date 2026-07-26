@@ -34,6 +34,7 @@ export const SettingsPanel = ({
   const containerRef = useRef(null);
   useFocusTrap(expanded, containerRef);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [activeSection, setActiveSection] = useState('settings-models');
   const [newModel, setNewModel] = useState({
     name: '',
     endpoint: '',
@@ -57,6 +58,15 @@ export const SettingsPanel = ({
     setShowAddForm(false);
   };
 
+  const scrollToSection = (id) => {
+    setActiveSection(id);
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    containerRef.current?.querySelector(`#${id}`)?.scrollIntoView({
+      behavior: reduceMotion ? 'auto' : 'smooth',
+      block: 'start',
+    });
+  };
+
   if (!expanded) return null;
 
   // 持久化状态文案 + 颜色
@@ -78,7 +88,8 @@ export const SettingsPanel = ({
           <div className="flex items-center gap-3">
             {/* 自动保存状态指示器 */}
             <div
-              className="mono"
+              className="mono modal-save-status"
+              aria-label={saveStatusInfo.text}
               style={{
                 fontSize: '0.7rem',
                 color: saveStatusInfo.color,
@@ -99,14 +110,41 @@ export const SettingsPanel = ({
                   animation: saveStatus === 'saving' ? 'pulseDot 1.2s ease-in-out infinite' : 'none',
                 }}
               />
-              {saveStatusInfo.text}
+              <span className="modal-save-status__text">{saveStatusInfo.text}</span>
             </div>
             <button className="modal-close" onClick={onToggle} aria-label="关闭">×</button>
           </div>
         </div>
         <div className="modal-body">
+          <nav className="settings-nav" aria-label="配置分区">
+            <button
+              type="button"
+              className={activeSection === 'settings-models' ? 'is-active' : ''}
+              aria-current={activeSection === 'settings-models' ? 'true' : undefined}
+              onClick={() => scrollToSection('settings-models')}
+            >
+              <span>01</span> 模型接入
+            </button>
+            <button
+              type="button"
+              className={activeSection === 'settings-desks' ? 'is-active' : ''}
+              aria-current={activeSection === 'settings-desks' ? 'true' : undefined}
+              onClick={() => scrollToSection('settings-desks')}
+            >
+              <span>02</span> 席位分配
+            </button>
+            <button
+              type="button"
+              className={activeSection === 'settings-data' ? 'is-active' : ''}
+              aria-current={activeSection === 'settings-data' ? 'true' : undefined}
+              onClick={() => scrollToSection('settings-data')}
+            >
+              <span>03</span> 数据与偏好
+            </button>
+          </nav>
+
           {/* Section: Model API Keys */}
-          <div style={{ marginBottom: 24 }}>
+          <div id="settings-models" className="settings-anchor" style={{ marginBottom: 24 }}>
             <div className="settings-section-head">◆ MODEL API KEYS · 模 型 接 入 凭 据</div>
             <div
               className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4"
@@ -280,7 +318,7 @@ export const SettingsPanel = ({
           </div>
 
           {/* Section: Analyst-Model Assignment */}
-          <div style={{ marginBottom: 24 }}>
+          <div id="settings-desks" className="settings-anchor" style={{ marginBottom: 24 }}>
             <div className="settings-section-head">◆ COLUMNIST DESK ASSIGNMENT · 专 栏 与 模 型 配 对</div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {ANALYSTS.map((a) => (
@@ -359,7 +397,7 @@ export const SettingsPanel = ({
           </div>
 
           {/* Section: Financial Data */}
-          <div>
+          <div id="settings-data" className="settings-anchor">
             <div className="settings-section-head">◆ FINANCIAL DATA · 行 情 数 据 源</div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
               <div>
