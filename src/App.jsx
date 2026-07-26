@@ -992,7 +992,7 @@ export default function App() {
           </div>
 
           <header className="gazette-masthead text-center">
-            <h1 className="masthead-title">
+            <h1 className="masthead-title" aria-label="AI议会">
               <span className="masthead-title__latin">AI</span>
               <span className="masthead-title__han">议会</span>
             </h1>
