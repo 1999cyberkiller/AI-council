@@ -101,15 +101,31 @@ body {
     margin-bottom: 22px;
   }
   .masthead-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.08em;
     margin: 0;
     color: var(--ink);
     font-family: 'Songti SC', 'STSong', 'Noto Serif SC', 'SimSun', serif;
     font-size: clamp(3.8rem, 8vw, 6.6rem);
     font-weight: 700;
     line-height: 0.92;
-    letter-spacing: 0.08em;
-    text-indent: 0.08em;
+    letter-spacing: 0;
     animation: mastheadReveal 0.46s ease-out both;
+  }
+  .masthead-title__latin,
+  .masthead-title__han {
+    display: block;
+    line-height: 0.92;
+  }
+  .masthead-title__latin {
+    letter-spacing: 0.035em;
+    transform: translateY(0.09em);
+  }
+  .masthead-title__han {
+    letter-spacing: 0.08em;
+    margin-right: -0.08em;
   }
   .masthead-deck {
     width: fit-content;
@@ -155,13 +171,15 @@ body {
   .subject-panel:focus-within::before { transform: scaleX(1); }
   .subject-panel__index {
     position: absolute;
-    top: -13px;
+    top: -29px;
     left: 20px;
     padding: 2px 8px;
     background: var(--ink);
     color: var(--paper);
     font-size: 0.62rem;
+    line-height: 1.4;
     letter-spacing: 0.18em;
+    z-index: 2;
   }
   .subject-panel__hint {
     font-size: 0.8rem;

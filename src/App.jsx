@@ -992,7 +992,10 @@ export default function App() {
           </div>
 
           <header className="gazette-masthead text-center">
-            <h1 className="masthead-title">AI议会</h1>
+            <h1 className="masthead-title">
+              <span className="masthead-title__latin">AI</span>
+              <span className="masthead-title__han">议会</span>
+            </h1>
             <div className="masthead-deck mono">
               四种投资框架，一份可追溯的研究裁决
             </div>
